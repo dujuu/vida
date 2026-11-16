@@ -8,7 +8,7 @@ Esta guía deja el sistema **funcionando en un computador nuevo**, sin saber pro
 
 ## Antes de empezar: cómo seguir esta guía
 
-1. Los comandos están en recuadros grises. **Se escriben (o se pegan) tal cual**, sin cambiar nada, y se aprieta **Enter**. Para pegar en la ventana negra se usa clic derecho, o `Ctrl + V`.
+1. Los comandos están en recuadros oscuros. **Se escriben (o se pegan) tal cual**, sin cambiar nada, y se aprieta **Enter**. Para pegar en la ventana negra se usa clic derecho, o `Ctrl + V`. Si un recuadro trae varias líneas, se escribe **una línea por vez** (Enter después de cada una). Si una sola instrucción larga aparece partida en dos líneas en el papel, es solo por el ancho de la página: se escribe de corrido, todo junto.
 2. Después de cada comando, **espere a que termine**: termina cuando vuelve a aparecer la línea con la carpeta y el cursor parpadeando. Algunos tardan varios minutos y parecen detenidos. Es normal.
 3. Los textos entre `<` y `>` los reemplaza usted, y se borran los símbolos `<` y `>`. Por ejemplo, `<CLAVE_DB>` se cambia por la clave que usted eligió.
 4. Use siempre la **ventana negra «Símbolo del sistema»** (se abre apretando la tecla Windows, escribiendo `cmd` y Enter). **No use «PowerShell»**: en algunos computadores bloquea los comandos de este proyecto.
@@ -23,7 +23,7 @@ Se las va a pedir la instalación más adelante. Escríbalas en un papel o en un
 | `CLAVE_ROOT` | Es la clave maestra de la base de datos. La elige en el paso 1.3. | |
 | `CLAVE_DB` | Es la clave que usa el sistema para entrar a la base. La elige en el paso 3. | |
 
-Elija claves de **solo letras y números** (sin espacios, sin tildes ni la ñ, sin símbolos), de 10 caracteres o más. Por ejemplo: `Verano2026Norte`. Los símbolos como `%`, `&`, `^` o las comillas rompen los comandos de esta guía.
+Elija claves de **solo letras y números** (sin espacios, sin tildes ni la ñ, sin símbolos), de 10 caracteres o más. Por ejemplo: `Verano2026Norte`. Los símbolos como `%`, `&`, `^` o las comillas rompen los comandos de esta guía, y el comando del paso 4.1 no los acepta.
 
 ---
 
@@ -148,45 +148,35 @@ copy .env.example .env
 
 **Qué debe ver:** `1 archivo(s) copiado(s).`
 
-### 4.1. Poner el secreto de seguridad (automático)
+### 4.1. Poner la clave y el secreto (un solo comando)
 
-Este comando inventa un secreto largo y lo escribe solo en el archivo `.env`. No hay que copiar nada. Péguelo entero, es **una sola línea**:
+Este comando escribe por usted en el archivo `.env` la clave de la base de datos y un secreto de seguridad que inventa solo. No hay que abrir ni editar nada a mano.
 
-```
-node -e "const fs=require('fs');const s=require('crypto').randomBytes(48).toString('hex');fs.writeFileSync('.env',fs.readFileSync('.env','utf8').replace(/^JWT_SECRET=.*/m,'JWT_SECRET='+s))"
-```
-
-**Qué debe ver:** no muestra nada y vuelve la línea de la carpeta. Eso es lo correcto.
-
-### 4.2. Poner la clave de la base de datos (automático)
-
-Escriba este comando, cambiando `<CLAVE_DB>` por la clave que eligió en el paso 3 (sin los símbolos `<` `>`). Es **una sola línea**:
+Escriba esto, cambiando `<CLAVE_DB>` por la clave que eligió en el paso 3 (y borrando los símbolos `<` y `>`):
 
 ```
-node -e "const fs=require('fs');fs.writeFileSync('.env',fs.readFileSync('.env','utf8').replace(/^DB_PASS=.*/m,'DB_PASS='+process.argv[1]))" <CLAVE_DB>
+node ..\scripts\configurar-env.cjs <CLAVE_DB>
 ```
 
-Por ejemplo, si su clave es `Verano2026Norte`, termina en `... process.argv[1]))" Verano2026Norte`.
-
-### 4.3. Comprobar que quedó bien
+Por ejemplo, si su clave es `Verano2026Norte`:
 
 ```
-findstr "DB_PASS JWT_SECRET MODO" .env
+node ..\scripts\configurar-env.cjs Verano2026Norte
 ```
 
-**Qué debe ver:** tres líneas parecidas a estas:
+**Qué debe ver:** un texto que empieza con `Listo. El archivo .env quedó así:` y tres líneas:
 
 ```
-DB_PASS=Verano2026Norte
-JWT_SECRET=4f9c1e...(un texto largo de letras y números, de 96 caracteres)
-MODO=desarrollo
+  DB_PASS     = Verano2026Norte
+  JWT_SECRET  = 58281b... (96 caracteres)
+  MODO        = desarrollo
 ```
 
 - `DB_PASS` debe mostrar **su** clave, igual a la del paso 3.
-- `JWT_SECRET` no debe decir `cambiar_por_un_secreto...`.
+- `JWT_SECRET` debe decir `96 caracteres` (las letras y números de adelante serán otros).
 - `MODO` debe decir `desarrollo`.
 
-Si algo quedó mal, repita el comando 4.1 o 4.2. No hay problema en repetirlos.
+**Si dice `ERROR`:** el mensaje explica qué corregir (por ejemplo, que la clave tiene un símbolo o que falta el paso anterior). Corrija y vuelva a escribir el comando. Se puede repetir todas las veces que haga falta.
 
 ---
 
@@ -313,6 +303,8 @@ El computador donde instaló el sistema es el **servidor**. Debe estar encendido
 netsh advfirewall firewall add rule name="Vida Norte 3000" dir=in action=allow protocol=TCP localport=3000 profile=private
 ```
 
+*(Es una sola línea, escrita de corrido. Debe terminar con `profile=private`.)*
+
 3. **En el celular o el otro computador**, conectado a la **misma red wifi o cable**, abra el navegador y escriba `http://` seguido de la IP y `:3000`. Por ejemplo: **http://192.168.1.50:3000**.
 
 Notas:
@@ -330,7 +322,7 @@ Notas:
 |---|---|
 | `'node' no se reconoce como un comando interno o externo` (o lo mismo con `npm` o `git`) | Cierre la ventana negra y abra una nueva. Si sigue, reinicie el computador. Si sigue, reinstale ese programa (paso 1). |
 | `npm : No se puede cargar el archivo ... porque la ejecución de scripts está deshabilitada` | Está usando PowerShell. Cierre la ventana y use **Símbolo del sistema** (`cmd`). |
-| `ER_ACCESS_DENIED_ERROR` al hacer `migration:run` o `start:prod` | La clave de `DB_PASS` en el archivo `.env` no es la misma `CLAVE_DB` del paso 3. Revise con `findstr "DB_PASS" .env` y repita el paso 4.2 con la clave correcta. |
+| `ER_ACCESS_DENIED_ERROR` al hacer `migration:run` o `start:prod` | La clave de `DB_PASS` en el archivo `.env` no es la misma `CLAVE_DB` del paso 3. Repita el comando del paso 4.1 con la misma clave que usó en el paso 3. |
 | `Unknown database 'vida_norte'` | Falta crear la base de datos: repita el paso 3. |
 | `ECONNREFUSED 127.0.0.1:3306` | MariaDB está apagada. Apriete la tecla Windows, escriba **Servicios**, ábralo, busque **MariaDB** (o **MySQL**), clic derecho → **Iniciar**. |
 | `Configuración inválida` al encender | Falta o está mal una línea del `.env`. El mensaje dice cuál. Lo más común: `JWT_SECRET` sin pegar o con menos de 32 caracteres. |
@@ -370,6 +362,6 @@ Esta guía instala el sistema con **datos de demostración** y en `MODO=desarrol
 Los pasos son los mismos con estas diferencias:
 
 - Se usa la **Terminal** en vez del Símbolo del sistema, y las carpetas se separan con `/` en lugar de `\` (por ejemplo `cd vida/arm-seguimiento/backend`).
-- `copy .env.example .env` se escribe `cp .env.example .env`, y `notepad .env` se cambia por `nano .env` (guardar con `Ctrl + O`, salir con `Ctrl + X`).
+- `copy .env.example .env` se escribe `cp .env.example .env`, y `node ..\scripts\configurar-env.cjs <CLAVE_DB>` se escribe `node ../scripts/configurar-env.cjs <CLAVE_DB>`.
 - Node.js (versión 22 o superior), Git y MariaDB 12 se instalan con el gestor de paquetes del sistema o desde sus sitios oficiales. La base se crea abriendo `sudo mariadb` (en lugar del «Command Prompt» de MariaDB del paso 3) y pegando las mismas líneas de SQL.
 - La guía técnica [GUIA_PUESTA_EN_MARCHA.md](GUIA_PUESTA_EN_MARCHA.md) trae los comandos para Linux (secciones 2 a 6), incluido cómo dejar el sistema encendido automáticamente con systemd.
