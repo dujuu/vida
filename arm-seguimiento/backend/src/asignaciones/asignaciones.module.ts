@@ -1,12 +1,16 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Usuario } from '../usuarios/usuario.entity.js';
+import { AccesoClinicoService } from './acceso-clinico.service.js';
 import { DoctorPaciente } from './doctor-paciente.entity.js';
-import { DoctorController } from './doctor.controller.js';
+import { RelacionesController } from './relaciones.controller.js';
+import { RelacionesService } from './relaciones.service.js';
 
-/** Módulo de asignaciones: el vínculo entre doctores y pacientes y las rutas del doctor. */
+/** M5. Relación médico–paciente y acceso clínico. Es global: todos los módulos clínicos usan `AccesoClinicoService`. */
+@Global()
 @Module({
-  imports: [TypeOrmModule.forFeature([Usuario, DoctorPaciente])],
-  controllers: [DoctorController],
+  imports: [TypeOrmModule.forFeature([DoctorPaciente])],
+  controllers: [RelacionesController],
+  providers: [AccesoClinicoService, RelacionesService],
+  exports: [AccesoClinicoService, RelacionesService],
 })
 export class AsignacionesModule {}

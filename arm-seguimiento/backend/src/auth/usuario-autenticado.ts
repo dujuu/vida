@@ -2,30 +2,38 @@ import { ApiProperty } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { Rol } from '../usuarios/rol.enum.js';
 
-/**
- * Datos mínimos del usuario que hace una petición. Los completa `JwtAuthGuard` con lo que hay en la
- * base de datos (no con lo que dice el token) y quedan disponibles en `request.user`.
- */
+/** Usuario que hace la petición, tal como lo deja el guardia después de verificarlo en la base de datos. */
 export class UsuarioAutenticado {
   @ApiProperty({ description: 'Identificador del usuario.', example: 3 })
   id: number;
 
-  @ApiProperty({ enum: Rol, description: 'Rol del usuario según la base de datos.', example: Rol.PACIENTE })
-  rol: Rol;
+  @ApiProperty({
+    enum: Rol,
+    nullable: true,
+    description: 'Rol con el que actúa en esta sesión. Es nulo hasta que elige perfil si tiene más de uno.',
+    example: Rol.PACIENTE,
+  })
+  rol: Rol | null;
+
+  @ApiProperty({ enum: Rol, isArray: true, description: 'Todos los roles vigentes del usuario.' })
+  roles: Rol[];
 
   @ApiProperty({ description: 'Nombre completo.', example: 'Ana Muñoz' })
   nombre: string;
+
+  @ApiProperty({ description: 'Identificador de la sesión.', example: '12' })
+  sesionId: string;
 }
 
-/** Contenido (claims) del token JWT que firma `AuthService.login`. */
+/** Contenido del token de acceso. */
 export interface JwtPayload {
-  /** Identificador del usuario (convención `sub` de JWT). */
+  /** Id del usuario. */
   sub: number;
-  /** Rol al momento de iniciar sesión. Solo informativo: la autorización usa el rol de la base de datos. */
-  rol: Rol;
-  /** Nombre del usuario al momento de iniciar sesión. */
-  nombre: string;
+  /** Id de la sesión, que se puede revocar. */
+  sid: string;
+  /** Rol activo, o nulo si el usuario aún no elige perfil. */
+  rol: Rol | null;
 }
 
-/** Solicitud de Express a la que `JwtAuthGuard` le agrega el usuario autenticado. */
+/** Petición con el usuario ya verificado. */
 export type RequestConUsuario = Request & { user?: UsuarioAutenticado };

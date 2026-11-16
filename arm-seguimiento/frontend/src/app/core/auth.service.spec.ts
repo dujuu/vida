@@ -1,101 +1,64 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter, Router } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { AuthService } from './auth.service';
-import type { Usuario } from './models';
 
-const CLAVE = 'vida-norte.sesion';
-const ana: Usuario = { id: 3, nombre: 'Ana Muñoz', rut: '16.789.012-1', rol: 'PACIENTE', especialidad: null };
-
-/** JWT de prueba (sin firma real): solo importa `exp`, que es lo que lee el cliente. */
-function token(expEnSegundos: number): string {
-  const b64 = (o: object) => btoa(JSON.stringify(o)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
-  return `${b64({ alg: 'HS256' })}.${b64({ sub: 3, exp: expEnSegundos })}.firma`;
-}
-const enUnaHora = () => Math.floor(Date.now() / 1000) + 3600;
-
-function crear() {
-  TestBed.configureTestingModule({
-    providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
-  });
-  return { auth: TestBed.inject(AuthService), http: TestBed.inject(HttpTestingController), router: TestBed.inject(Router) };
-}
+const usuario = { id: 7, nombre: 'Ana', rut: '16.789.012-1', roles: ['PACIENTE'], rol: 'PACIENTE', especialidad: null, debeCambiarPassword: false };
 
 describe('AuthService', () => {
+  let auth: AuthService;
+  let ctrl: HttpTestingController;
+
   beforeEach(() => {
-    sessionStorage.clear();
-    localStorage.clear();
+    TestBed.configureTestingModule({ providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()] });
+    auth = TestBed.inject(AuthService);
+    ctrl = TestBed.inject(HttpTestingController);
   });
 
-  it('sin sesión, verificar devuelve null y no llama al servidor', async () => {
-    const { auth, http } = crear();
-    expect(await auth.verificar()).toBeNull();
-    http.expectNone('/api/auth/me');
+  afterEach(() => ctrl.verify());
+
+  it('al iniciar recupera la sesión con la cookie de renovación', async () => {
+    const listo = auth.iniciar();
+    ctrl.expectOne('/api/auth/renovar').flush({ accessToken: 'abc', usuario });
+    await listo;
+    expect(auth.usuario()?.nombre).toBe('Ana');
+    expect(auth.token()).toBe('abc');
   });
 
-  it('el login guarda la sesión en sessionStorage (por pestaña), no en localStorage', () => {
-    const { auth, http } = crear();
-    auth.login('16.789.012-1', 'x').subscribe();
-    http.expectOne('/api/auth/login').flush({ accessToken: token(enUnaHora()), usuario: ana });
-    expect(auth.usuario()?.nombre).toBe('Ana Muñoz');
-    expect(sessionStorage.getItem(CLAVE)).not.toBeNull();
-    expect(localStorage.getItem(CLAVE)).toBeNull();
-  });
-
-  it('tras un login reciente no vuelve a verificar con el servidor', async () => {
-    const { auth, http } = crear();
-    auth.login('16.789.012-1', 'x').subscribe();
-    http.expectOne('/api/auth/login').flush({ accessToken: token(enUnaHora()), usuario: ana });
-    expect((await auth.verificar())?.rol).toBe('PACIENTE');
-    http.expectNone('/api/auth/me');
-  });
-
-  it('ignora una sesión guardada con el token vencido', () => {
-    sessionStorage.setItem(CLAVE, JSON.stringify({ token: token(Math.floor(Date.now() / 1000) - 60), usuario: ana }));
-    const { auth } = crear();
+  it('si no hay sesión, queda sin usuario y sin token', async () => {
+    const listo = auth.iniciar();
+    ctrl.expectOne('/api/auth/renovar').flush({}, { status: 401, statusText: 'No autorizado' });
+    await listo;
     expect(auth.usuario()).toBeNull();
+    expect(auth.token()).toBeNull();
   });
 
-  it('ignora una sesión guardada que no es JSON válido', () => {
-    sessionStorage.setItem(CLAVE, 'basura{{');
-    const { auth } = crear();
-    expect(auth.usuario()).toBeNull();
+  it('iniciar solo renueva una vez aunque se llame varias veces', async () => {
+    const a = auth.iniciar();
+    const b = auth.iniciar();
+    ctrl.expectOne('/api/auth/renovar').flush({ accessToken: 'abc', usuario });
+    await Promise.all([a, b]);
   });
 
-  it('verificar corrige el rol guardado con el que dice el servidor', async () => {
-    // Un paciente que edita su rol a DOCTOR en el navegador no engaña a la aplicación.
-    sessionStorage.setItem(CLAVE, JSON.stringify({ token: token(enUnaHora()), usuario: { ...ana, rol: 'DOCTOR' } }));
-    const { auth, http } = crear();
-    const pendiente = auth.verificar();
-    http.expectOne('/api/auth/me').flush({ id: 3, rol: 'PACIENTE', nombre: 'Ana Muñoz' });
-    expect((await pendiente)?.rol).toBe('PACIENTE');
-    expect(auth.usuario()?.rol).toBe('PACIENTE');
+  it('el token no se guarda en el almacenamiento del navegador', async () => {
+    const listo = auth.iniciar();
+    ctrl.expectOne('/api/auth/renovar').flush({ accessToken: 'secreto-123', usuario });
+    await listo;
+    expect(JSON.stringify({ ...localStorage })).not.toContain('secreto-123');
+    expect(JSON.stringify({ ...sessionStorage })).not.toContain('secreto-123');
   });
 
-  it('verificar devuelve null si el servidor rechaza la sesión (401)', async () => {
-    sessionStorage.setItem(CLAVE, JSON.stringify({ token: token(enUnaHora()), usuario: ana }));
-    const { auth, http } = crear();
-    const pendiente = auth.verificar();
-    http.expectOne('/api/auth/me').flush({ message: 'x' }, { status: 401, statusText: 'Unauthorized' });
-    expect(await pendiente).toBeNull();
+  it('la Clave Única simulada usa su propia ruta', () => {
+    auth.login('16789012-1', 'x', true).subscribe();
+    ctrl.expectOne('/api/auth/clave-unica-simulada').flush({ accessToken: 't', usuario });
   });
 
-  it('verificar sin conexión deja pasar con lo guardado (el servidor igual exige permisos)', async () => {
-    sessionStorage.setItem(CLAVE, JSON.stringify({ token: token(enUnaHora()), usuario: ana }));
-    const { auth, http } = crear();
-    const pendiente = auth.verificar();
-    http.expectOne('/api/auth/me').error(new ProgressEvent('error'), { status: 0 });
-    expect((await pendiente)?.nombre).toBe('Ana Muñoz');
-  });
-
-  it('logout borra la sesión y vuelve al login sin dejar la pantalla en el historial', () => {
-    sessionStorage.setItem(CLAVE, JSON.stringify({ token: token(enUnaHora()), usuario: ana }));
-    const { auth, router } = crear();
-    const navegar = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
-    auth.logout();
-    expect(auth.usuario()).toBeNull();
-    expect(sessionStorage.getItem(CLAVE)).toBeNull();
-    expect(navegar).toHaveBeenCalledWith('/login', { replaceUrl: true });
+  it('cada rol tiene su pantalla de inicio y sin rol se elige perfil', () => {
+    expect(auth.rutaInicio('PACIENTE')).toBe('/paciente');
+    expect(auth.rutaInicio('MEDICO')).toBe('/medico');
+    expect(auth.rutaInicio('RECEPCIONISTA')).toBe('/recepcion');
+    expect(auth.rutaInicio('ADMINISTRADOR')).toBe('/admin');
+    expect(auth.rutaInicio(null)).toBe('/perfil');
   });
 });

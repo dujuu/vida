@@ -1,59 +1,35 @@
 # Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.5.
+Una sola aplicación Angular 22 (componentes independientes, *signals* y Angular Material 3) para los cuatro roles. Es responsive: el paciente la usa sobre todo en el teléfono (navegación inferior) y el personal en el computador (navegación lateral). Cada rol es un conjunto de rutas con carga diferida: quien entra como paciente no descarga el código de las demás áreas.
 
-## Development server
+La puesta en marcha está en la [guía de puesta en marcha](../../GUIA_PUESTA_EN_MARCHA.md); la visión general, en el [README del proyecto](../README.md).
 
-To start a local development server, run:
+## Estructura
 
-```bash
-ng serve
+```
+src/app/
+├── core/        sesión (token en memoria), cliente de la API, interceptor, guardias de ruta, fechas, RUT, modelos
+├── shared/      piezas comunes: estructura de pantalla (Shell), calendario, selector de hora, bandeja de avisos, buscador de pacientes
+├── login/       inicio de sesión, activación de cuenta, elección de perfil
+├── paciente/    Hoy, Calendario, Horas, Indicaciones, Más, Mi ficha
+├── medico/      Agenda, Pacientes y ficha clínica, Atención, Indicar, Seguimiento, Disponibilidad
+├── recepcion/   Agenda del centro, Pacientes, Reservar, Contactos
+└── admin/       Resumen, Usuarios, Profesionales, Auditoría, Parámetros
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## Comandos
 
-## Code scaffolding
+| Comando | Qué hace |
+|---|---|
+| `npm start` | servidor de desarrollo en http://localhost:4200; `/api` va al backend por `proxy.conf.json` |
+| `npm run build` | versión de producción en `dist/frontend/browser` (la entrega el backend) |
+| `npm test` | pruebas unitarias (Vitest) |
+| `npm run docs` | documentación del código (TypeDoc) |
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Criterios de diseño
 
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- **Un estado nunca se comunica solo con color:** cada estado lleva su texto.
+- **Los errores de un campo aparecen solo después de tocarlo** (`core/error-campo.ts`).
+- **Las fechas** se muestran en la hora del centro (America/Santiago) con las funciones de `core/fechas.ts`, sin depender de la zona del dispositivo.
+- **El token de acceso vive solo en memoria.** Las guardias de ruta son una comodidad de la interfaz: la protección real está en el servidor.
+- En guardias asíncronas, **`inject()` se pide antes del primer `await`** (después ya no hay contexto de inyección; hay pruebas que lo cubren).

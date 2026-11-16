@@ -16,3 +16,9 @@ __pycache__/
 # Archivos auxiliares que no forman parte del proyecto
 AGENTS.md
 fuentes_generador/
+
+# Datos de pacientes y respaldos: nunca al repositorio
+arm-seguimiento/backend/archivos/
+arm-seguimiento/backend/archivos-prueba/
+arm-seguimiento/backend/respaldos/
+*.sql.gz

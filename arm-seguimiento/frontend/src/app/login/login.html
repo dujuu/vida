@@ -10,10 +10,9 @@
         <input
           matInput
           formControlName="rut"
+          appRut
           autocomplete="username"
-          inputmode="text"
           placeholder="12.345.678-5"
-          (input)="alEscribirRut($event)"
         />
         <mat-hint>Puede escribirlo con o sin puntos y guion</mat-hint>
         @if (form.controls.rut.errors; as errores) {
@@ -56,7 +55,14 @@
       <button mat-flat-button type="submit" class="entrar" [disabled]="cargando()">
         {{ cargando() ? 'Ingresando…' : 'Ingresar' }}
       </button>
+      @if (claveUnica()) {
+        <button mat-stroked-button type="button" class="entrar" [disabled]="cargando()" (click)="ingresar(true)">
+          <mat-icon>badge</mat-icon> Ingresar con Clave Única (simulación)
+        </button>
+        <p class="nota">Simulación de demostración: no es el servicio real de ClaveÚnica. Usa los mismos datos de arriba.</p>
+      }
     </form>
+    <p class="activar">¿Tiene un código de activación? <a routerLink="/activar">Active su cuenta</a></p>
 
     @if (mostrarDemo) {
       <mat-expansion-panel class="demo" [hideToggle]="false">

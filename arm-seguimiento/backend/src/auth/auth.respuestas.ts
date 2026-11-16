@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Rol } from '../usuarios/rol.enum.js';
 
-/** Datos del usuario que la API devuelve al iniciar sesión. */
+/** Usuario tal como lo recibe el frontend al iniciar sesión y en `/auth/me`. */
 export class UsuarioSesionDto {
   @ApiProperty({ description: 'Identificador del usuario.', example: 1 })
   id: number;
@@ -12,26 +12,24 @@ export class UsuarioSesionDto {
   @ApiProperty({ description: 'RUT con puntos y guion.', example: '12.345.678-5' })
   rut: string;
 
-  @ApiProperty({ enum: Rol, description: 'Rol del usuario.', example: Rol.DOCTOR })
-  rol: Rol;
+  @ApiProperty({ enum: Rol, isArray: true, description: 'Todos los roles del usuario.' })
+  roles: Rol[];
 
-  @ApiProperty({
-    description: 'Especialidad del doctor. Es nula para los pacientes.',
-    example: 'Medicina General',
-    type: String,
-    nullable: true,
-  })
+  @ApiProperty({ enum: Rol, nullable: true, description: 'Rol activo de la sesión; nulo hasta que elige perfil.' })
+  rol: Rol | null;
+
+  @ApiProperty({ description: 'Especialidad del médico. Nula para los demás.', example: 'Medicina General', type: String, nullable: true })
   especialidad: string | null;
+
+  @ApiProperty({ description: 'Si debe cambiar su contraseña antes de seguir.' })
+  debeCambiarPassword: boolean;
 }
 
-/** Respuesta del inicio de sesión: el token y los datos del usuario. */
+/** Respuesta de login, de renovación y de elegir perfil. */
 export class LoginRespuestaDto {
-  @ApiProperty({
-    description: 'Token JWT. Se envía en el encabezado `Authorization: Bearer <token>`. Vence a las 8 horas.',
-    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-  })
+  @ApiProperty({ description: 'Token de acceso, de corta duración. Se envía como `Authorization: Bearer <token>`.' })
   accessToken: string;
 
-  @ApiProperty({ type: UsuarioSesionDto, description: 'Usuario que inició sesión.' })
+  @ApiProperty({ type: UsuarioSesionDto })
   usuario: UsuarioSesionDto;
 }

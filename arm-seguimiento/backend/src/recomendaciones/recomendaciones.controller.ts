@@ -1,97 +1,99 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
-import {
-  ApiBadRequestResponse,
-  ApiBearerAuth,
-  ApiCreatedResponse,
-  ApiForbiddenResponse,
-  ApiNotFoundResponse,
-  ApiOkResponse,
-  ApiOperation,
-  ApiParam,
-  ApiTags,
-  ApiUnauthorizedResponse,
-} from '@nestjs/swagger';
+import { Body, Controller, Get, HttpCode, Param, ParseIntPipe, Patch, Post, Put, Query } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser, Roles } from '../auth/decorators.js';
 import { UsuarioAutenticado } from '../auth/usuario-autenticado.js';
 import { Rol } from '../usuarios/rol.enum.js';
-import { CrearRecomendacionDto } from './crear-recomendacion.dto.js';
-import { RecomendacionEmitidaDto, RecomendacionRecibidaDto } from './recomendacion.respuestas.js';
+import {
+  CrearRecomendacionDto,
+  EditarRecomendacionDto,
+  FiltroRecomendacionesDto,
+  ModificarPautaDto,
+  SuspenderRecomendacionDto,
+  VistaPreviaDto,
+} from './crear-recomendacion.dto.js';
 import { RecomendacionesService } from './recomendaciones.service.js';
 
-/** Rutas de las recomendaciones bajo `/api/recomendaciones`. */
+/** Indicaciones del médico al paciente, con pauta horaria, versiones y suspensión. */
 @ApiTags('Recomendaciones')
 @ApiBearerAuth()
-@Controller('recomendaciones')
+@Controller()
 export class RecomendacionesController {
   constructor(private readonly servicio: RecomendacionesService) {}
 
-  /** Crea una recomendación. El doctor sale del token; nunca se acepta un `doctorId` del cliente. */
-  @Post()
-  @Roles(Rol.DOCTOR)
+  @Post('recomendaciones')
+  @Roles(Rol.MEDICO)
   @ApiOperation({
-    summary: 'Enviar una recomendación',
+    summary: 'Crear una indicación para un paciente suyo, con o sin pauta horaria.',
     description:
-      'Crea una recomendación del doctor autenticado para uno de sus pacientes asignados. ' +
-      'Los textos se recortan y se limpian de caracteres de control antes de validarlos.',
+      'Los datos del medicamento (nombre, dosis, vía) y la pauta los escribe siempre el médico. Con pauta, el sistema genera ' +
+      'las tomas del calendario del paciente en la misma transacción. Responde 404 si el paciente no es suyo.',
   })
-  @ApiCreatedResponse({ type: RecomendacionEmitidaDto, description: 'Recomendación creada, sin leer.' })
-  @ApiBadRequestResponse({ description: 'Datos inválidos: textos muy cortos o largos, tipo inexistente o campos no permitidos.' })
-  @ApiUnauthorizedResponse({ description: 'Sin sesión válida.' })
-  @ApiForbiddenResponse({ description: 'El usuario no es doctor, o el paciente no está asignado a él.' })
-  crear(
-    @CurrentUser() doctor: UsuarioAutenticado,
-    @Body() dto: CrearRecomendacionDto,
-  ): Promise<RecomendacionEmitidaDto> {
-    return this.servicio.crear(doctor.id, dto);
+  crear(@CurrentUser() medico: UsuarioAutenticado, @Body() dto: CrearRecomendacionDto) {
+    return this.servicio.crear(medico, dto);
   }
 
-  /** Lista lo que el doctor envió, con el estado de lectura de cada recomendación. */
-  @Get('emitidas')
-  @Roles(Rol.DOCTOR)
-  @ApiOperation({
-    summary: 'Recomendaciones que envié',
-    description: 'Devuelve las recomendaciones del doctor autenticado, de la más nueva a la más antigua.',
-  })
-  @ApiOkResponse({ type: RecomendacionEmitidaDto, isArray: true })
-  @ApiUnauthorizedResponse({ description: 'Sin sesión válida.' })
-  @ApiForbiddenResponse({ description: 'El usuario no es doctor.' })
-  emitidas(@CurrentUser() doctor: UsuarioAutenticado): Promise<RecomendacionEmitidaDto[]> {
-    return this.servicio.emitidas(doctor.id);
+  @Post('recomendaciones/vista-previa')
+  @HttpCode(200)
+  @Roles(Rol.MEDICO)
+  @ApiOperation({ summary: 'Lista las tomas que generaría una pauta, sin guardar. El médico la confirma antes de crear.' })
+  vistaPrevia(@Body() dto: VistaPreviaDto) {
+    return this.servicio.vistaPrevia(dto.pauta);
   }
 
-  /** Lista lo que el paciente recibió. El paciente sale del token: no hay forma de pedir lo de otra persona. */
-  @Get('mias')
+  @Get('recomendaciones/emitidas')
+  @Roles(Rol.MEDICO)
+  @ApiOperation({ summary: 'Indicaciones que emití, de la más nueva a la más antigua, con filtros y paginación.' })
+  emitidas(@CurrentUser() medico: UsuarioAutenticado, @Query() f: FiltroRecomendacionesDto) {
+    return this.servicio.emitidas(medico.id, f);
+  }
+
+  @Get('recomendaciones/mias')
   @Roles(Rol.PACIENTE)
-  @ApiOperation({
-    summary: 'Recomendaciones que recibí',
-    description: 'Devuelve las recomendaciones del paciente autenticado, de cualquiera de sus doctores, de la más nueva a la más antigua.',
-  })
-  @ApiOkResponse({ type: RecomendacionRecibidaDto, isArray: true })
-  @ApiUnauthorizedResponse({ description: 'Sin sesión válida.' })
-  @ApiForbiddenResponse({ description: 'El usuario no es paciente.' })
-  mias(@CurrentUser() paciente: UsuarioAutenticado): Promise<RecomendacionRecibidaDto[]> {
-    return this.servicio.mias(paciente.id);
+  @ApiOperation({ summary: 'Indicaciones que recibí de cualquiera de mis médicos: vigentes o anteriores.' })
+  mias(@CurrentUser() paciente: UsuarioAutenticado, @Query() f: FiltroRecomendacionesDto) {
+    return this.servicio.mias(paciente.id, f);
   }
 
-  /** Marca una recomendación del paciente como leída. Repetir la solicitud no cambia la fecha. */
-  @Patch(':id/leida')
+  @Get('ficha/:pacienteId/indicaciones')
+  @Roles(Rol.MEDICO)
+  @ApiOperation({ summary: 'Todas las indicaciones de un paciente suyo, de cualquier médico.' })
+  delPaciente(@CurrentUser() medico: UsuarioAutenticado, @Param('pacienteId', ParseIntPipe) pacienteId: number, @Query() f: FiltroRecomendacionesDto) {
+    return this.servicio.delPaciente(medico, pacienteId, f);
+  }
+
+  @Get('recomendaciones/:id')
+  @Roles(Rol.MEDICO, Rol.PACIENTE)
+  @ApiOperation({ summary: 'Detalle con historial de versiones, pauta vigente y resumen de tomas (autorreporte).' })
+  detalle(@CurrentUser() actor: UsuarioAutenticado, @Param('id', ParseIntPipe) id: number) {
+    return this.servicio.detalle(actor, id);
+  }
+
+  @Put('recomendaciones/:id/pauta')
+  @Roles(Rol.MEDICO)
+  @ApiOperation({ summary: 'Modificar la pauta: crea una versión nueva y conserva lo ya registrado. Solo el autor.' })
+  modificarPauta(@CurrentUser() medico: UsuarioAutenticado, @Param('id', ParseIntPipe) id: number, @Body() dto: ModificarPautaDto) {
+    return this.servicio.modificarPauta(medico, id, dto);
+  }
+
+  @Patch('recomendaciones/:id/leida')
   @Roles(Rol.PACIENTE)
-  @ApiOperation({
-    summary: 'Marcar como leída',
-    description:
-      'Registra la fecha y la hora de lectura. Si la recomendación ya estaba leída, conserva la fecha original. ' +
-      'La marca no se puede deshacer.',
-  })
-  @ApiParam({ name: 'id', description: 'Identificador de la recomendación.', example: 12 })
-  @ApiOkResponse({ type: RecomendacionRecibidaDto })
-  @ApiBadRequestResponse({ description: 'El identificador no es un número entero.' })
-  @ApiUnauthorizedResponse({ description: 'Sin sesión válida.' })
-  @ApiForbiddenResponse({ description: 'El usuario no es paciente.' })
-  @ApiNotFoundResponse({ description: 'La recomendación no existe o es de otro paciente.' })
-  marcarLeida(
-    @CurrentUser() paciente: UsuarioAutenticado,
-    @Param('id', ParseIntPipe) id: number,
-  ): Promise<RecomendacionRecibidaDto> {
+  @ApiOperation({ summary: 'Marcar como leída. Es idempotente: conserva la fecha original.' })
+  marcarLeida(@CurrentUser() paciente: UsuarioAutenticado, @Param('id', ParseIntPipe) id: number) {
     return this.servicio.marcarLeida(paciente.id, id);
+  }
+
+  @Patch('recomendaciones/:id')
+  @Roles(Rol.MEDICO)
+  @ApiOperation({ summary: 'Corregir título, texto o fecha de término, con motivo. Solo el autor; guarda la versión anterior.' })
+  editar(@CurrentUser() medico: UsuarioAutenticado, @Param('id', ParseIntPipe) id: number, @Body() dto: EditarRecomendacionDto) {
+    return this.servicio.editar(medico, id, dto);
+  }
+
+  @Post('recomendaciones/:id/suspender')
+  @HttpCode(200)
+  @Roles(Rol.MEDICO)
+  @ApiOperation({ summary: 'Suspender con motivo. Cualquier médico con relación vigente con el paciente puede hacerlo.' })
+  suspender(@CurrentUser() medico: UsuarioAutenticado, @Param('id', ParseIntPipe) id: number, @Body() dto: SuspenderRecomendacionDto) {
+    return this.servicio.suspender(medico, id, dto.motivo);
   }
 }

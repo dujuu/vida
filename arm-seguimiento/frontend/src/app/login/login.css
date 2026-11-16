@@ -68,3 +68,6 @@ code {
   font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
   font-size: 0.9em;
 }
+
+.activar { margin-top: 1rem; text-align: center; font: var(--mat-sys-body-medium); }
+.activar a { color: var(--vn-tinta); font-weight: 600; }

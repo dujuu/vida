@@ -1,10 +1,8 @@
-import { CreateDateColumn, Entity, PrimaryColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, PrimaryColumn } from 'typeorm';
 
 /**
- * Tabla `doctor_paciente`: qué pacientes atiende cada doctor.
- *
- * Un doctor solo ve y solo escribe a los pacientes que tiene asignados. Un paciente puede tener
- * varios doctores, por ejemplo de distintas especialidades. La clave primaria es compuesta.
+ * Relación de atención entre un médico y un paciente. Es la llave de todo acceso clínico: sin una relación
+ * vigente, el médico no ve nada del paciente.
  */
 @Entity({ name: 'doctor_paciente' })
 export class DoctorPaciente {
@@ -14,7 +12,22 @@ export class DoctorPaciente {
   @PrimaryColumn({ name: 'paciente_id', type: 'int', unsigned: true })
   pacienteId: number;
 
-  /** Fecha de la asignación, en UTC. */
   @CreateDateColumn({ name: 'created_at', type: 'datetime', precision: 6, default: () => 'UTC_TIMESTAMP(6)' })
   createdAt: Date;
+
+  /** Cómo nació el vínculo: por una cita, a mano o por la carga inicial. */
+  @Column({ type: 'enum', enum: ['CITA', 'MANUAL', 'INICIAL'], default: 'INICIAL' })
+  origen: 'CITA' | 'MANUAL' | 'INICIAL';
+
+  @Column({ name: 'creada_por', type: 'int', unsigned: true, nullable: true })
+  creadaPor: number | null;
+
+  @Column({ type: 'boolean', default: true })
+  vigente: boolean;
+
+  @Column({ name: 'cerrada_en', type: 'datetime', precision: 6, nullable: true })
+  cerradaEn: Date | null;
+
+  @Column({ name: 'motivo_cierre', type: 'varchar', length: 200, nullable: true })
+  motivoCierre: string | null;
 }

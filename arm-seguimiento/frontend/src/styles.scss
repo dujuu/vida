@@ -23,6 +23,8 @@ html {
   );
   // Azul del logo (#0A4E99), para títulos.
   --vn-tinta: #0a4e99;
+  // Fondo suave para resaltar (días libres, elementos nuevos): el contenedor primario del tema, muy atenuado.
+  --vn-suave: color-mix(in srgb, var(--mat-sys-primary-container) 40%, var(--mat-sys-surface-container-lowest));
 }
 
 *,
@@ -39,6 +41,11 @@ body {
   font: var(--mat-sys-body-large);
   font-size: 1.0625rem; // 17px: más cómodo de leer para pacientes mayores
   -webkit-font-smoothing: antialiased;
+}
+
+// Enlaces con el color del tema (los botones y las tarjetas que son enlaces definen el suyo y tienen prioridad).
+a {
+  color: var(--mat-sys-primary);
 }
 
 h1,
@@ -114,4 +121,46 @@ h3 {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+// ───────────── Utilidades compartidas por todas las pantallas ─────────────
+.tarjeta {
+  background: var(--mat-sys-surface-container-lowest);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--mat-sys-corner-large);
+  padding: 1rem 1.25rem;
+}
+.tarjeta h2 { margin-bottom: .5rem; }
+.muted { color: var(--mat-sys-on-surface-variant); font: var(--mat-sys-body-medium); }
+.negrita { font-weight: 700; }
+.fila { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+.fila-espaciada { display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; }
+.columna { display: grid; gap: .75rem; }
+.rejilla-2 { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); }
+.rejilla-3 { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); }
+.campos { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); }
+.campos .ancho { grid-column: 1 / -1; }
+mat-form-field { width: 100%; }
+.acciones-fila { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+.lista-tarjetas { list-style: none; margin: 0; padding: 0; display: grid; gap: .6rem; }
+.item { display: flex; gap: .75rem; align-items: center; padding: .75rem 1rem; border: 1px solid var(--mat-sys-outline-variant); border-radius: 12px; background: var(--mat-sys-surface-container-lowest); }
+.grande { flex: 1 1 10rem; min-width: 0; display: grid; gap: .1rem; }
+.grande small { color: var(--mat-sys-on-surface-variant); }
+.item.destacado { border-color: var(--mat-sys-primary); background: var(--vn-suave); }
+.item.alerta { border-color: #d9a400; background: #fff7df; }
+.hora-grande { font: var(--mat-sys-headline-small); color: var(--vn-tinta); min-width: 4.5rem; }
+.tabla { width: 100%; border-collapse: collapse; font: var(--mat-sys-body-medium); }
+.tabla th { text-align: left; font: var(--mat-sys-label-large); color: var(--mat-sys-on-surface-variant); padding: .5rem .6rem; border-bottom: 2px solid var(--mat-sys-outline-variant); white-space: nowrap; }
+.tabla td { padding: .6rem; border-bottom: 1px solid var(--mat-sys-outline-variant); vertical-align: top; }
+.tabla tbody tr:hover { background: var(--mat-sys-surface-container-low); }
+.tabla-scroll { overflow-x: auto; }
+.boton-grande { min-height: 52px !important; font-size: 1.05rem !important; }
+.peligro { color: var(--mat-sys-error); }
+.alergia { background: #fde7e7; color: #7a1010; border: 1px solid #f0b4b4; border-radius: 12px; padding: .5rem .85rem; font-weight: 600; }
+@media print {
+  .barra, .nav, .no-imprimir, mat-toolbar, app-shell header { display: none !important; }
+  .cuerpo { display: block !important; }
+  .contenido { padding: 0 !important; max-width: none !important; }
+  body { background: #fff; font-size: 11pt; }
+  .tarjeta { border: 0; padding: 0; break-inside: avoid; }
 }

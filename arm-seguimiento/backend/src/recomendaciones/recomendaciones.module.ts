@@ -1,14 +1,15 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { DoctorPaciente } from '../asignaciones/doctor-paciente.entity.js';
-import { Recomendacion } from './recomendacion.entity.js';
+import { CalendarioModule } from '../calendario/calendario.module.js';
+import { Pauta, Recomendacion, RecomendacionVersion } from './recomendacion.entity.js';
 import { RecomendacionesController } from './recomendaciones.controller.js';
 import { RecomendacionesService } from './recomendaciones.service.js';
 
-/** Módulo de recomendaciones: envío del doctor, consulta de ambos lados y marca de lectura. */
+/** M10. Indicaciones y pautas. */
 @Module({
-  imports: [TypeOrmModule.forFeature([Recomendacion, DoctorPaciente])],
+  imports: [TypeOrmModule.forFeature([Recomendacion, Pauta, RecomendacionVersion]), CalendarioModule],
   controllers: [RecomendacionesController],
   providers: [RecomendacionesService],
+  exports: [RecomendacionesService],
 })
 export class RecomendacionesModule {}
