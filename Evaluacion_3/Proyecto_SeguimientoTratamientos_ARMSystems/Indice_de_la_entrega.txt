@@ -1,6 +1,6 @@
 Proyecto: Sistema de seguimiento y fidelización de tratamientos
 Cliente: Centro Médico Vida Norte SpA
-Equipo: ARM Systems (Mauricio Aliaga, Nicolás González, Fabián Moore, Lukas Rozas)
+Equipo: ARM Systems (Mauricio Aliaga, Fabián Moore, Lukas Rozas)
 Asignatura: Gestión de Proyectos y Equipos de Trabajo. Evaluación N°3
 Profesor: Pedro Fernández Urrutia
 Arica, noviembre de 2026

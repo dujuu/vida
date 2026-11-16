@@ -2,6 +2,8 @@
 
 Cómo dejar el sistema funcionando en el centro: **un solo computador** (el servidor) con MariaDB y la aplicación, y todos los demás equipos y teléfonos entrando por el navegador a una dirección de la red del centro. No hay aplicación móvil que instalar, ni servicios en la nube: la carpeta del proyecto y su base de datos son el sistema completo.
 
+> **¿Solo necesita probarlo o presentarlo en otro computador?** Use [`INSTALACION_PASO_A_PASO.md`](INSTALACION_PASO_A_PASO.md): está escrita para Windows, sin conocimientos técnicos, y deja el sistema funcionando con datos de demostración.
+
 La guía tiene dos caminos:
 
 - **Instalar en el servidor del centro** (secciones 1 a 8): para usarlo de verdad.
@@ -38,8 +40,8 @@ El computador debe quedar **encendido en horario de atención**, conectado por c
 ## 3. Descargar e instalar
 
 ```bash
-git clone https://github.com/dujuu/maurosalud.git
-cd maurosalud/arm-seguimiento
+git clone https://github.com/dujuu/vida.git
+cd vida/arm-seguimiento
 ```
 
 ### 3.1. Crear la base de datos (una sola vez)
@@ -138,7 +140,7 @@ After=network.target mariadb.service
 
 [Service]
 User=vidanorte
-WorkingDirectory=/opt/maurosalud/arm-seguimiento/backend
+WorkingDirectory=/opt/vida/arm-seguimiento/backend
 ExecStart=/usr/bin/node dist/main
 Restart=on-failure
 
@@ -172,7 +174,7 @@ scripts/respaldo.sh
 Prográmelo todos los días (Linux, `crontab -e`):
 
 ```
-30 2 * * *  /opt/maurosalud/arm-seguimiento/scripts/respaldo.sh >> /var/log/vida-norte-respaldo.log 2>&1
+30 2 * * *  /opt/vida/arm-seguimiento/scripts/respaldo.sh >> /var/log/vida-norte-respaldo.log 2>&1
 ```
 
 El panel **Administración → Resumen** muestra la fecha del último respaldo y avisa si tiene más de 2 días.
