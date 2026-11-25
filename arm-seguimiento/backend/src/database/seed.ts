@@ -50,6 +50,60 @@ const PERSONAS: Array<{ rut: string; titulo?: string; nombres: string; ap: strin
   { rut: rutDe(17345678), nombres: 'Patricio', ap: 'Mamani', am: 'Flores', roles: ['PACIENTE'], telefono: '+56 9 5555 0111', nac: '1983-05-09', sexo: 'M', comuna: 'Arica' },
 ];
 
+
+/** Médicos adicionales: el centro tiene cerca de 35 colaboradores entre profesionales y administrativos. */
+const MEDICOS_EXTRA: Array<[string, string, string, string, string]> = [
+  ['Dr.', 'Andrés', 'Bravo', 'Soto', 'Traumatología'],
+  ['Dra.', 'Carolina', 'Espinoza', 'Rivas', 'Cardiología'],
+  ['Dr.', 'Felipe', 'Molina', 'Vera', 'Dermatología'],
+  ['Dra.', 'Natalia', 'Reyes', 'Campos', 'Oftalmología'],
+  ['Dr.', 'Sebastián', 'Cárdenas', 'Pino', 'Otorrinolaringología'],
+  ['Dra.', 'Javiera', 'Navarro', 'Silva', 'Odontología'],
+  ['Dr.', 'Cristóbal', 'Lara', 'Ponce', 'Medicina Interna'],
+  ['Dra.', 'Constanza', 'Ibarra', 'Godoy', 'Neurología'],
+  ['Dr.', 'Ignacio', 'Ramírez', 'Leiva', 'Urología'],
+  ['Dra.', 'Francisca', 'Poblete', 'Urra', 'Fonoaudiología'],
+  ['Dr.', 'Gonzalo', 'Escobar', 'Tello', 'Medicina General'],
+  ['Dra.', 'Antonia', 'Figueroa', 'Bahamondes', 'Pediatría'],
+  ['Dr.', 'Maximiliano', 'Silva', 'Cuevas', 'Kinesiología'],
+  ['Nut.', 'Catalina', 'Bustos', 'Araya', 'Nutrición'],
+  ['Psic.', 'Pilar', 'Aguirre', 'Zúñiga', 'Psicología'],
+  ['T.O.', 'Joaquín', 'Medina', 'Rojas', 'Terapia Ocupacional'],
+  ['Mat.', 'Macarena', 'Salinas', 'Peña', 'Matronería'],
+  ['Dr.', 'Rafael', 'Toro', 'Donoso', 'Medicina General'],
+  ['Dra.', 'Belén', 'Carrasco', 'Mora', 'Ginecología'],
+  ['Dr.', 'Hugo', 'Parra', 'Henríquez', 'Cardiología'],
+];
+const ADMINISTRATIVOS_EXTRA: Array<[string, string, string, Rol]> = [
+  ['Gabriela', 'Núñez', 'Arce', 'RECEPCIONISTA'],
+  ['Karen', 'Soto', 'Lillo', 'RECEPCIONISTA'],
+  ['Lorena', 'Bravo', 'Cortés', 'RECEPCIONISTA'],
+  ['Yasna', 'Flores', 'Tapia', 'RECEPCIONISTA'],
+  ['Ximena', 'Vidal', 'Rojas', 'RECEPCIONISTA'],
+  ['Claudia', 'Maldonado', 'Pino', 'RECEPCIONISTA'],
+  ['Héctor', 'Maldonado', 'Varas', 'ADMINISTRADOR'],
+];
+const PACIENTES_EXTRA: Array<[string, string, string, string, 'F' | 'M', string]> = [
+  ['Camilo', 'Ríos', 'Aravena', '1989-02-14', 'M', 'Arica'], ['Valeria', 'Cortés', 'Henríquez', '1975-08-30', 'F', 'Arica'],
+  ['Nicanor', 'Choque', 'Mamani', '1958-04-11', 'M', 'Putre'], ['Elena', 'Vargas', 'Pizarro', '1969-10-02', 'F', 'Arica'],
+  ['Ignacia', 'Lagos', 'Medina', '2012-05-19', 'F', 'Arica'], ['Matías', 'Poma', 'Ticona', '2009-09-07', 'M', 'Camarones'],
+  ['Silvana', 'Cáceres', 'Ortega', '1994-12-24', 'F', 'Arica'], ['Hernán', 'Villalobos', 'Pérez', '1950-06-16', 'M', 'Arica'],
+  ['Daniela', 'Ayala', 'Fuentes', '1987-01-08', 'F', 'Arica'], ['Raúl', 'Condori', 'Gutiérrez', '1972-03-29', 'M', 'General Lagos'],
+  ['Paulina', 'Herrera', 'Díaz', '2001-07-13', 'F', 'Arica'], ['Esteban', 'Zapata', 'Rojas', '1999-11-21', 'M', 'Arica'],
+  ['Carmen', 'Mollo', 'Quispe', '1945-02-03', 'F', 'Putre'], ['Alonso', 'Pinto', 'Vera', '2015-08-25', 'M', 'Arica'],
+  ['Trinidad', 'Salazar', 'Mora', '1981-09-17', 'F', 'Arica'], ['Bruno', 'Contreras', 'Gómez', '1966-05-05', 'M', 'Arica'],
+  ['Amanda', 'Torres', 'Lira', '2004-10-31', 'F', 'Arica'], ['Gabriel', 'Olivares', 'Soto', '1992-04-02', 'M', 'Arica'],
+  ['Rocío', 'Mamani', 'Choque', '1978-12-12', 'F', 'Camarones'], ['Osvaldo', 'Reyes', 'Tapia', '1953-01-26', 'M', 'Arica'],
+];
+MEDICOS_EXTRA.forEach(([titulo, nombres, ap, am, especialidad], i) =>
+  PERSONAS.push({ rut: rutDe(12100000 + i * 137_413), titulo, nombres, ap, am, roles: ['MEDICO'], especialidad }));
+ADMINISTRATIVOS_EXTRA.forEach(([nombres, ap, am, rol], i) =>
+  PERSONAS.push({ rut: rutDe(13200000 + i * 211_907), nombres, ap, am, roles: [rol], telefono: `+56 9 5555 03${String(i).padStart(2, '0')}` }));
+PACIENTES_EXTRA.forEach(([nombres, ap, am, nac, sexo, comuna], i) =>
+  PERSONAS.push({ rut: rutDe(14300000 + i * 187_321), nombres, ap, am, roles: ['PACIENTE'], telefono: `+56 9 5555 02${String(i).padStart(2, '0')}`, nac, sexo, comuna }));
+const RUTS_MEDICOS_EXTRA = PERSONAS.filter((x) => x.roles.includes('MEDICO')).slice(-MEDICOS_EXTRA.length).map((x) => x.rut);
+const RUTS_PACIENTES_EXTRA = PERSONAS.filter((x) => x.roles.includes('PACIENTE')).slice(-PACIENTES_EXTRA.length).map((x) => x.rut);
+
 /** RUT de una persona de demostración según su nombre de pila. */
 const rutDe_ = (nombres: string) => PERSONAS.find((x) => x.nombres === nombres)!.rut;
 
@@ -75,6 +129,10 @@ const ASIGNACIONES: Array<[string, string]> = [
   ['12.345.678-5', rutDe_('Patricio')],
   ['14.567.890-0', rutDe_('Rosa')],
   ['14.567.890-0', rutDe_('Diego')],
+  ...RUTS_PACIENTES_EXTRA.flatMap((p, i): Array<[string, string]> => [
+    [RUTS_MEDICOS_EXTRA[(i * 3) % RUTS_MEDICOS_EXTRA.length], p],
+    [RUTS_MEDICOS_EXTRA[(i * 7 + 1) % RUTS_MEDICOS_EXTRA.length], p],
+  ]),
 ];
 
 /** Fecha de hace `dias` días y `horas` horas. */
@@ -112,6 +170,8 @@ async function main() {
   if (process.argv.includes('--reset')) {
     for (const t of TABLAS_TRANSACCIONALES) await q(`DELETE FROM ${t}`);
   }
+
+  for (const e of ['Traumatología', 'Cardiología', 'Dermatología', 'Oftalmología', 'Otorrinolaringología', 'Odontología', 'Medicina Interna', 'Neurología', 'Urología', 'Fonoaudiología', 'Terapia Ocupacional', 'Matronería']) await q('INSERT IGNORE INTO especialidades (nombre) VALUES (?)', [e]);
 
   // Personas, roles y perfiles
   const ids = new Map<string, number>();
@@ -162,6 +222,7 @@ async function main() {
     [rutDe_('Matías'), [['10:00', '13:00'], ['15:00', '17:00']]],
     [rutDe_('Tomás'), [['11:00', '19:00']]],
   ];
+  RUTS_MEDICOS_EXTRA.forEach((rut, i) => horarios.push([rut, i % 3 === 0 ? [['08:30', '12:30']] : i % 3 === 1 ? [['14:00', '18:00']] : [['09:00', '13:00'], ['15:00', '17:00']]]));
   for (const [rut, bloques] of horarios) {
     const [{ n }] = await q('SELECT COUNT(*) AS n FROM bloques_horario WHERE medico_id = ?', [id(rut)]);
     if (Number(n) > 0) continue;
