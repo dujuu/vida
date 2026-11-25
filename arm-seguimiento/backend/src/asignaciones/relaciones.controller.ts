@@ -84,8 +84,8 @@ export class RelacionesController {
 
   @Post('relaciones/:medicoId/:pacienteId/cerrar')
   @HttpCode(204)
-  @Roles(Rol.MEDICO, Rol.ADMINISTRADOR)
-  @ApiOperation({ summary: 'Cerrar la relación con un motivo.' })
+  @Roles(Rol.MEDICO, Rol.RECEPCIONISTA, Rol.ADMINISTRADOR)
+  @ApiOperation({ summary: 'Cerrar la relación con un motivo (quitar al médico asignado). Recepción, administración o el propio médico.' })
   cerrar(
     @CurrentUser() actor: UsuarioAutenticado,
     @Param('medicoId', ParseIntPipe) medicoId: number,

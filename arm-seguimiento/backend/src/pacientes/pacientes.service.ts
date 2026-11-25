@@ -9,6 +9,7 @@ import { ConfiguracionService } from '../configuracion/configuracion.service.js'
 import { armarPagina, desplazamiento, type Pagina } from '../common/paginacion.js';
 import { formatearRut, normalizarRut } from '../common/rut.util.js';
 import { hoyLocal } from '../common/fechas.util.js';
+import { fechaMinimaNacimiento } from '../common/validaciones.js';
 import { Rol } from '../usuarios/rol.enum.js';
 import { Usuario, UsuarioRol } from '../usuarios/usuario.entity.js';
 import { escaparLike } from '../usuarios/usuarios.service.js';
@@ -39,11 +40,16 @@ export interface PacienteAdmin {
   consentimiento: { version: number; aceptadoEn: Date; medio: string } | null;
 }
 
-/** Valida una fecha de nacimiento `AAAA-MM-DD`: existe, no es futura y es posterior a 1900. */
-export function fechaNacimientoValida(fecha: string): boolean {
+/**
+ * Valida una fecha de nacimiento `AAAA-MM-DD`: existe, no es futura y no supera los 130 años de edad.
+ *
+ * @param fecha Fecha a validar.
+ * @param hoy Fecha de hoy en el centro; se puede pasar para probar la función.
+ */
+export function fechaNacimientoValida(fecha: string, hoy: string = hoyLocal()): boolean {
   const d = new Date(`${fecha}T00:00:00Z`);
   if (Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== fecha) return false;
-  return fecha >= '1900-01-01' && fecha <= hoyLocal();
+  return fecha >= fechaMinimaNacimiento(hoy) && fecha <= hoy;
 }
 
 /** Registro administrativo de pacientes: alta, búsqueda, contacto, duplicados y fusión. */
@@ -134,7 +140,7 @@ export class PacientesService {
     if (!rut) throw new BadRequestException('El RUT ingresado no es válido');
     if (!dto.nombres || !dto.apellidoPaterno) throw new BadRequestException('Ingrese nombres y apellido paterno');
     if (!dto.fechaNacimiento || !fechaNacimientoValida(dto.fechaNacimiento)) {
-      throw new BadRequestException('Ingrese una fecha de nacimiento válida');
+      throw new BadRequestException('La fecha de nacimiento no puede ser futura ni superar los 130 años');
     }
     this.validarContacto(dto.telefono, dto.correo);
 
@@ -226,7 +232,7 @@ export class PacientesService {
     if (dto.apellidoMaterno !== undefined) (u.apellidoMaterno = dto.apellidoMaterno || null, campos.push('apellidoMaterno'));
     if (Object.keys(u).length) await this.usuarios.update({ id }, u);
     if (dto.fechaNacimiento !== undefined) {
-      if (!fechaNacimientoValida(dto.fechaNacimiento)) throw new BadRequestException('Ingrese una fecha de nacimiento válida');
+      if (!fechaNacimientoValida(dto.fechaNacimiento)) throw new BadRequestException('La fecha de nacimiento no puede ser futura ni superar los 130 años');
       await this.perfiles.update({ usuarioId: id }, { fechaNacimiento: dto.fechaNacimiento });
       campos.push('fechaNacimiento');
     }

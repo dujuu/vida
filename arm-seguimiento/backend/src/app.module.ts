@@ -19,6 +19,7 @@ import { FichaModule } from './ficha/ficha.module.js';
 import { NotificacionesModule } from './notificaciones/notificaciones.module.js';
 import { PacientesModule } from './pacientes/pacientes.module.js';
 import { ProfesionalesModule } from './profesionales/profesionales.module.js';
+import { PlantillasModule } from './plantillas/plantillas.module.js';
 import { RecomendacionesModule } from './recomendaciones/recomendaciones.module.js';
 import { SeguimientoModule } from './seguimiento/seguimiento.module.js';
 import { TareasModule } from './tareas/tareas.module.js';
@@ -63,6 +64,7 @@ import { UsuariosModule } from './usuarios/usuarios.module.js';
     ContactosModule,
     FichaModule,
     RecomendacionesModule,
+    PlantillasModule,
     CalendarioModule,
     NotificacionesModule,
     SeguimientoModule,

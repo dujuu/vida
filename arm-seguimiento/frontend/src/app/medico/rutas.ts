@@ -14,6 +14,7 @@ export const RUTAS: Routes = [
         { ruta: '/medico/pacientes', etiqueta: 'Pacientes', icono: 'groups' },
         { ruta: '/medico/seguimiento', etiqueta: 'Seguimiento', icono: 'monitoring' },
         { ruta: '/medico/disponibilidad', etiqueta: 'Disponibilidad', icono: 'event_available' },
+        { ruta: '/medico/plantillas', etiqueta: 'Plantillas', icono: 'content_paste' },
       ],
     },
     children: [
@@ -29,6 +30,7 @@ export const RUTAS: Routes = [
       { path: 'indicaciones/:id/pauta', title: 'Modificar la pauta - Vida Norte', data: { modificar: true }, loadComponent: () => import('./indicar').then((m) => m.Indicar) },
       { path: 'seguimiento', title: 'Seguimiento - Vida Norte', loadComponent: () => import('./seguimiento').then((m) => m.SeguimientoMedico) },
       { path: 'disponibilidad', title: 'Disponibilidad - Vida Norte', loadComponent: () => import('./disponibilidad').then((m) => m.Disponibilidad) },
+      { path: 'plantillas', title: 'Plantillas - Vida Norte', loadComponent: () => import('../admin/plantillas').then((m) => m.Plantillas) },
       { path: 'notificaciones', title: 'Avisos - Vida Norte', component: Bandeja },
     ],
   },

@@ -12,6 +12,8 @@ import { Api } from '../core/api';
 import { mensajeError } from '../core/errores';
 import { fechaCorta, fechaHora } from '../core/fechas';
 import { Estado, Pagina } from '../shared/piezas';
+import { SelectorComuna } from '../shared/selector-comuna';
+import { telefonoValido } from '../core/validadores';
 
 /** Menú «Más»: accesos a la ficha, el perfil, los médicos y los avisos. */
 @Component({
@@ -57,7 +59,7 @@ interface Perfil {
 /** «Mi perfil»: el paciente edita su contacto y preferencias. No puede cambiar su RUT, nombre ni fecha de nacimiento. */
 @Component({
   selector: 'app-perfil',
-  imports: [Pagina, Estado, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatSlideToggleModule, MatButtonModule],
+  imports: [Pagina, Estado, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatSlideToggleModule, MatButtonModule, SelectorComuna],
   template: `
     <app-pagina titulo="Mi perfil" [volver]="true">
       <app-estado [cargando]="cargando()" [error]="error()">
@@ -69,15 +71,15 @@ interface Perfil {
           <form [formGroup]="form" (ngSubmit)="guardar()" class="tarjeta columna" novalidate>
             <h2>Contacto</h2>
             <div class="campos">
-              <mat-form-field><mat-label>Teléfono</mat-label><input matInput formControlName="telefono" autocomplete="tel" /></mat-form-field>
+              <mat-form-field><mat-label>Teléfono</mat-label><input matInput type="tel" formControlName="telefono" autocomplete="tel" /><mat-error>Debe tener entre 8 y 12 dígitos (puede llevar + al inicio).</mat-error></mat-form-field>
               <mat-form-field><mat-label>Correo</mat-label><input matInput formControlName="correo" type="email" autocomplete="email" /></mat-form-field>
               <mat-form-field><mat-label>Dirección</mat-label><input matInput formControlName="direccion" autocomplete="street-address" /></mat-form-field>
-              <mat-form-field><mat-label>Comuna</mat-label><input matInput formControlName="comuna" /></mat-form-field>
+              <app-selector-comuna [control]="form.controls.comuna" />
             </div>
             <h2>Contacto de emergencia</h2>
             <div class="campos">
               <mat-form-field><mat-label>Nombre</mat-label><input matInput formControlName="emergenciaNombre" /></mat-form-field>
-              <mat-form-field><mat-label>Teléfono</mat-label><input matInput formControlName="emergenciaTelefono" /></mat-form-field>
+              <mat-form-field><mat-label>Teléfono</mat-label><input matInput type="tel" formControlName="emergenciaTelefono" /><mat-error>Debe tener entre 8 y 12 dígitos (puede llevar + al inicio).</mat-error></mat-form-field>
               <mat-form-field><mat-label>Parentesco</mat-label><input matInput formControlName="emergenciaParentesco" /></mat-form-field>
             </div>
             <h2>Preferencias</h2>
@@ -104,7 +106,7 @@ export class PerfilPaciente {
   protected readonly fecha = fechaCorta;
   protected readonly hora = fechaHora;
   protected readonly form = inject(NonNullableFormBuilder).group({
-    telefono: [''], correo: [''], direccion: [''], comuna: [''], emergenciaNombre: [''], emergenciaTelefono: [''], emergenciaParentesco: [''], medioContacto: [''], aceptaRecordatorios: [true],
+    telefono: ['', telefonoValido], correo: [''], direccion: [''], comuna: [''], emergenciaNombre: [''], emergenciaTelefono: ['', telefonoValido], emergenciaParentesco: [''], medioContacto: [''], aceptaRecordatorios: [true],
   });
 
   constructor() {
@@ -122,11 +124,14 @@ export class PerfilPaciente {
   }
 
   protected guardar(): void {
+    if (this.form.invalid) return this.form.markAllAsTouched();
     this.guardando.set(true);
     this.errorGuardar.set(null);
     const v = this.form.getRawValue();
     const cuerpo: Record<string, unknown> = { ...v };
     if (!v.medioContacto) delete cuerpo['medioContacto'];
+    // Un campo vacío no se envía: el servidor valida el formato de lo que llega.
+    for (const k of ['telefono', 'correo', 'emergenciaTelefono']) if (cuerpo[k] === '') delete cuerpo[k];
     this.api.patch<Perfil>('/mi-perfil', cuerpo).subscribe({
       next: (r) => {
         this.p.set(r);

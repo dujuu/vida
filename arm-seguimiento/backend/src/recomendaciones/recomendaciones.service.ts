@@ -62,7 +62,7 @@ const aFecha = (v: unknown): string | null => (v instanceof Date ? v.toISOString
 /**
  * Indicaciones y recomendaciones del médico al paciente, con vigencia, estados, versiones y pauta horaria.
  *
- * Reglas centrales: el sistema nunca propone dosis, vías, frecuencias ni duraciones (las escribe el médico);
+ * Reglas centrales: el sistema nunca decide dosis, vías, frecuencias ni duraciones (las escribe el médico, o las carga desde una plantilla que puede modificar);
  * cambiar una pauta crea una versión nueva y conserva lo ya registrado; solo el autor modifica, pero cualquier
  * médico con relación vigente puede suspender; nada se borra.
  */

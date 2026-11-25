@@ -32,6 +32,7 @@ import { CrearAgendaCitasContactos1793660000008 } from './migrations/17936600000
 import { CrearFichaClinica1793660000009 } from './migrations/1793660000009-CrearFichaClinica.js';
 import { CrearTratamientos1793660000010 } from './migrations/1793660000010-CrearTratamientos.js';
 import { CrearAvisosYAuditoria1793660000011 } from './migrations/1793660000011-CrearAvisosYAuditoria.js';
+import { CrearPlantillasIndicacion1793660000012 } from './migrations/1793660000012-CrearPlantillasIndicacion.js';
 
 /** Todas las entidades del sistema. */
 export const ENTIDADES = [
@@ -81,6 +82,7 @@ export const MIGRACIONES = [
   CrearFichaClinica1793660000009,
   CrearTratamientos1793660000010,
   CrearAvisosYAuditoria1793660000011,
+  CrearPlantillasIndicacion1793660000012,
 ];
 
 /**

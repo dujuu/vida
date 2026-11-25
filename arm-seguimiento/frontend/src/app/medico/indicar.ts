@@ -53,6 +53,12 @@ const DIAS = [
           @if (paso() === 1) {
             <section class="tarjeta campos">
               @if (!modificar) {
+                <mat-form-field class="ancho"><mat-label>Plantilla de indicación</mat-label>
+                  <mat-select formControlName="plantilla" (selectionChange)="aplicarPlantilla($event.value)">
+                    <mat-option [value]="0">Otro (escribir la indicación a mano)</mat-option>
+                    @for (p of plantillas(); track p.id) { <mat-option [value]="p.id">{{ p.nombre }}</mat-option> }
+                  </mat-select>
+                  <mat-hint>Cargan los campos de abajo, que puede cambiar antes de continuar.</mat-hint></mat-form-field>
                 <mat-form-field><mat-label>Tipo de indicación</mat-label>
                   <mat-select formControlName="tipo">@for (t of tipos; track t.valor) { <mat-option [value]="t.valor">{{ t.etiqueta }}</mat-option> }</mat-select></mat-form-field>
                 <mat-form-field class="ancho"><mat-label>Título</mat-label><input matInput formControlName="titulo" maxlength="150" autocomplete="off" /><mat-hint>Resumen corto, por ejemplo «Amoxicilina por 7 días».</mat-hint><mat-error>Escriba un título de al menos 3 caracteres.</mat-error></mat-form-field>
@@ -196,11 +202,13 @@ export class Indicar {
   protected readonly errorPrevia = signal<string | null>(null);
   protected readonly previa = signal<{ total: number; tomas: Toma[]; truncado: boolean } | null>(null);
   protected readonly intentoPaso2 = signal(false);
+  protected readonly plantillas = signal<any[]>([]);
   protected readonly horas = signal<string[]>(['']);
   protected readonly diasSel = signal<number[]>([]);
   private pacienteId = 0;
 
   protected readonly f = this.fb.group({
+    plantilla: [0],
     tipo: ['MEDICAMENTO'],
     titulo: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(150)]],
     descripcion: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(2000)]],
@@ -259,8 +267,22 @@ export class Indicar {
       });
     } else {
       this.pacienteId = this.id();
+      this.api.get<any[]>('/plantillas').subscribe({ next: (r) => this.plantillas.set(r), error: () => this.plantillas.set([]) });
       this.cargarAlergias();
     }
+  }
+
+  /** Carga los campos de una plantilla. El médico puede cambiarlos todos; «Otro» (0) no toca nada. */
+  protected aplicarPlantilla(id: number): void {
+    const p = this.plantillas().find((x) => x.id === id);
+    if (!p) return;
+    this.tipoActual.set(p.tipo);
+    this.f.patchValue({
+      tipo: p.tipo, titulo: p.titulo, descripcion: p.descripcion, medicamento: p.medicamento ?? '', presentacion: p.presentacion ?? '',
+      dosis: p.dosis ?? '', via: p.via ?? '', modo: p.modo ?? '', intervaloHoras: p.intervaloHoras ?? null, duracionDias: p.duracionDias ?? null,
+      conPauta: !!p.modo,
+    }, { emitEvent: false });
+    this.conPauta.set(!!p.modo);
   }
 
   private cargarAlergias(): void {

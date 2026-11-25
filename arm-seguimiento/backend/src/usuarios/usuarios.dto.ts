@@ -19,11 +19,11 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { limpiarTexto } from '../common/texto.util.js';
+import { REGEX_NOMBRE_PERSONA, REGEX_TELEFONO } from '../common/validaciones.js';
 import { PaginacionDto } from '../common/paginacion.js';
 import { Rol } from './rol.enum.js';
 
-/** Expresión de un teléfono: dígitos, espacios, paréntesis, guion y + inicial. */
-export const REGEX_TELEFONO = /^[+0-9 ()-]{7,20}$/;
+export { REGEX_TELEFONO };
 
 /** Datos profesionales de un médico. */
 export class PerfilProfesionalDto {
@@ -68,6 +68,7 @@ export class DatosPersonalesDto {
   @IsString()
   @MinLength(2, { message: 'Los nombres deben tener al menos 2 caracteres' })
   @MaxLength(80, { message: 'Los nombres no pueden superar los 80 caracteres' })
+  @Matches(REGEX_NOMBRE_PERSONA, { message: 'Los nombres solo pueden tener letras, espacios y guion' })
   nombres?: string;
 
   @IsOptional()
@@ -75,12 +76,14 @@ export class DatosPersonalesDto {
   @IsString()
   @MinLength(2, { message: 'El apellido paterno debe tener al menos 2 caracteres' })
   @MaxLength(60, { message: 'El apellido paterno no puede superar los 60 caracteres' })
+  @Matches(REGEX_NOMBRE_PERSONA, { message: 'El apellido paterno solo puede tener letras, espacios y guion' })
   apellidoPaterno?: string;
 
   @IsOptional()
   @Transform(limpiarTexto)
   @IsString()
   @MaxLength(60, { message: 'El apellido materno no puede superar los 60 caracteres' })
+  @Matches(REGEX_NOMBRE_PERSONA, { message: 'El apellido materno solo puede tener letras, espacios y guion' })
   apellidoMaterno?: string;
 
   @IsOptional()
@@ -91,7 +94,7 @@ export class DatosPersonalesDto {
 
   @IsOptional()
   @Transform(limpiarTexto)
-  @Matches(REGEX_TELEFONO, { message: 'El teléfono no es válido' })
+  @Matches(REGEX_TELEFONO, { message: 'El teléfono debe tener entre 8 y 12 dígitos (puede llevar + al inicio)' })
   telefono?: string;
 }
 
@@ -113,18 +116,21 @@ export class CrearUsuarioDto {
   @IsString({ message: 'Ingrese los nombres' })
   @MinLength(2, { message: 'Los nombres deben tener al menos 2 caracteres' })
   @MaxLength(80, { message: 'Los nombres no pueden superar los 80 caracteres' })
+  @Matches(REGEX_NOMBRE_PERSONA, { message: 'Los nombres solo pueden tener letras, espacios y guion' })
   nombres: string;
 
   @Transform(limpiarTexto)
   @IsString({ message: 'Ingrese el apellido paterno' })
   @MinLength(2, { message: 'El apellido paterno debe tener al menos 2 caracteres' })
   @MaxLength(60, { message: 'El apellido paterno no puede superar los 60 caracteres' })
+  @Matches(REGEX_NOMBRE_PERSONA, { message: 'El apellido paterno solo puede tener letras, espacios y guion' })
   apellidoPaterno: string;
 
   @IsOptional()
   @Transform(limpiarTexto)
   @IsString()
   @MaxLength(60, { message: 'El apellido materno no puede superar los 60 caracteres' })
+  @Matches(REGEX_NOMBRE_PERSONA, { message: 'El apellido materno solo puede tener letras, espacios y guion' })
   apellidoMaterno?: string;
 
   @IsOptional()
@@ -135,7 +141,7 @@ export class CrearUsuarioDto {
 
   @IsOptional()
   @Transform(limpiarTexto)
-  @Matches(REGEX_TELEFONO, { message: 'El teléfono no es válido' })
+  @Matches(REGEX_TELEFONO, { message: 'El teléfono debe tener entre 8 y 12 dígitos (puede llevar + al inicio)' })
   telefono?: string;
 
   @IsArray({ message: 'Indique al menos un rol' })

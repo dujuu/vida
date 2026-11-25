@@ -28,7 +28,7 @@ type Rol = 'PACIENTE' | 'MEDICO' | 'RECEPCIONISTA' | 'ADMINISTRADOR';
 const rutDe = (cuerpo: number) => `${cuerpo}-${calcularDv(String(cuerpo))}`;
 
 /** Personas de demostración. Todos los nombres y RUT son ficticios. */
-const PERSONAS: Array<{ rut: string; titulo?: string; nombres: string; ap: string; am?: string; roles: Rol[]; especialidad?: string; correo?: string; telefono?: string }> = [
+const PERSONAS: Array<{ rut: string; titulo?: string; nombres: string; ap: string; am?: string; roles: Rol[]; especialidad?: string; correo?: string; telefono?: string; nac?: string; sexo?: 'F' | 'M'; comuna?: string }> = [
   { rut: rutDe(11222333), nombres: 'Camila', ap: 'Rojas', am: 'Vega', roles: ['ADMINISTRADOR'], correo: 'camila.rojas@ejemplo.cl' },
   { rut: rutDe(12333444), nombres: 'Daniela', ap: 'Pizarro', am: 'Soto', roles: ['RECEPCIONISTA', 'PACIENTE'], telefono: '+56 9 5555 0001' },
   { rut: '12.345.678-5', titulo: 'Dr.', nombres: 'Rodrigo', ap: 'Salas', roles: ['MEDICO'], especialidad: 'Medicina General' },
@@ -36,7 +36,22 @@ const PERSONAS: Array<{ rut: string; titulo?: string; nombres: string; ap: strin
   { rut: '16.789.012-1', nombres: 'Ana', ap: 'Muñoz', roles: ['PACIENTE'], telefono: '+56 9 5555 0101', correo: 'ana.munoz@ejemplo.cl' },
   { rut: '18.234.567-9', nombres: 'Carlos', ap: 'Pérez', roles: ['PACIENTE'], telefono: '+56 9 5555 0102' },
   { rut: '19.345.678-2', nombres: 'Sofía', ap: 'Araya', roles: ['PACIENTE'], telefono: '+56 9 5555 0103' },
+  { rut: rutDe(15432109), titulo: 'Dra.', nombres: 'Valentina', ap: 'Ortiz', am: 'Lagos', roles: ['MEDICO'], especialidad: 'Pediatría' },
+  { rut: rutDe(13876543), titulo: 'Dra.', nombres: 'Isidora', ap: 'Vergara', am: 'Mella', roles: ['MEDICO'], especialidad: 'Ginecología' },
+  { rut: rutDe(14987654), titulo: 'Nut.', nombres: 'Matías', ap: 'Fuentes', am: 'Díaz', roles: ['MEDICO'], especialidad: 'Nutrición' },
+  { rut: rutDe(16123456), titulo: 'Psic.', nombres: 'Tomás', ap: 'Herrera', am: 'Cortés', roles: ['MEDICO'], especialidad: 'Psicología' },
+  { rut: rutDe(17654321), nombres: 'Marcela', ap: 'Gallardo', am: 'Rojas', roles: ['PACIENTE'], telefono: '+56 9 5555 0104', nac: '1962-09-03', sexo: 'F', comuna: 'Arica' },
+  { rut: rutDe(10987654), nombres: 'Jorge', ap: 'Tapia', am: 'Núñez', roles: ['PACIENTE'], telefono: '+56 9 5555 0105', nac: '1954-01-22', sexo: 'M', comuna: 'Arica' },
+  { rut: rutDe(21345678), nombres: 'Martina', ap: 'Quispe', am: 'Mamani', roles: ['PACIENTE'], telefono: '+56 9 5555 0106', nac: '2018-06-15', sexo: 'F', comuna: 'Arica' },
+  { rut: rutDe(20234567), nombres: 'Benjamín', ap: 'Castro', am: 'Olivares', roles: ['PACIENTE'], telefono: '+56 9 5555 0107', nac: '2016-11-30', sexo: 'M', comuna: 'Camarones' },
+  { rut: rutDe(19456789), nombres: 'Fernanda', ap: 'Soto', am: 'Valdés', roles: ['PACIENTE'], telefono: '+56 9 5555 0108', nac: '1996-03-18', sexo: 'F', comuna: 'Arica' },
+  { rut: rutDe(18765432), nombres: 'Diego', ap: 'Álvarez', am: 'Pizarro', roles: ['PACIENTE'], telefono: '+56 9 5555 0109', nac: '1991-12-05', sexo: 'M', comuna: 'Putre' },
+  { rut: rutDe(9876543), nombres: 'Rosa', ap: 'Challapa', am: 'Colque', roles: ['PACIENTE'], telefono: '+56 9 5555 0110', nac: '1948-07-27', sexo: 'F', comuna: 'General Lagos' },
+  { rut: rutDe(17345678), nombres: 'Patricio', ap: 'Mamani', am: 'Flores', roles: ['PACIENTE'], telefono: '+56 9 5555 0111', nac: '1983-05-09', sexo: 'M', comuna: 'Arica' },
 ];
+
+/** RUT de una persona de demostración según su nombre de pila. */
+const rutDe_ = (nombres: string) => PERSONAS.find((x) => x.nombres === nombres)!.rut;
 
 /** Relaciones `[rut médico, rut paciente]`. Carlos Pérez tiene a los dos médicos. */
 const ASIGNACIONES: Array<[string, string]> = [
@@ -44,6 +59,22 @@ const ASIGNACIONES: Array<[string, string]> = [
   ['12.345.678-5', '18.234.567-9'],
   ['14.567.890-0', '18.234.567-9'],
   ['14.567.890-0', '19.345.678-2'],
+  // Pacientes y médicos adicionales
+  [rutDe_('Valentina'), rutDe_('Martina')],
+  [rutDe_('Valentina'), rutDe_('Benjamín')],
+  [rutDe_('Isidora'), rutDe_('Fernanda')],
+  [rutDe_('Isidora'), rutDe_('Marcela')],
+  [rutDe_('Matías'), rutDe_('Jorge')],
+  [rutDe_('Matías'), rutDe_('Patricio')],
+  [rutDe_('Matías'), rutDe_('Fernanda')],
+  [rutDe_('Tomás'), rutDe_('Diego')],
+  [rutDe_('Tomás'), rutDe_('Fernanda')],
+  ['12.345.678-5', rutDe_('Marcela')],
+  ['12.345.678-5', rutDe_('Jorge')],
+  ['12.345.678-5', rutDe_('Rosa')],
+  ['12.345.678-5', rutDe_('Patricio')],
+  ['14.567.890-0', rutDe_('Rosa')],
+  ['14.567.890-0', rutDe_('Diego')],
 ];
 
 /** Fecha de hace `dias` días y `horas` horas. */
@@ -105,7 +136,7 @@ async function main() {
       );
     }
     if (p.roles.includes('PACIENTE')) {
-      await q(`INSERT IGNORE INTO perfil_paciente (usuario_id, fecha_nacimiento, sexo, medio_contacto) VALUES (?, ?, ?, 'WHATSAPP')`, [fila.id, '1985-04-12', 'F']);
+      await q(`INSERT IGNORE INTO perfil_paciente (usuario_id, fecha_nacimiento, sexo, comuna, medio_contacto) VALUES (?, ?, ?, ?, 'WHATSAPP')`, [fila.id, p.nac ?? '1985-04-12', p.sexo ?? 'F', p.comuna ?? 'Arica']);
       const [{ n }] = await q('SELECT COUNT(*) AS n FROM consentimientos WHERE paciente_id = ?', [fila.id]);
       if (Number(n) === 0) await q(`INSERT INTO consentimientos (paciente_id, version, medio) VALUES (?, 1, 'APP')`, [fila.id]);
     }
@@ -126,6 +157,10 @@ async function main() {
   const horarios: Array<[string, Array<[string, string]>]> = [
     [SALAS, [['09:00', '13:00'], ['14:30', '17:30']]],
     [CONTRERAS, [['08:30', '12:30']]],
+    [rutDe_('Valentina'), [['09:00', '13:00']]],
+    [rutDe_('Isidora'), [['14:00', '18:00']]],
+    [rutDe_('Matías'), [['10:00', '13:00'], ['15:00', '17:00']]],
+    [rutDe_('Tomás'), [['11:00', '19:00']]],
   ];
   for (const [rut, bloques] of horarios) {
     const [{ n }] = await q('SELECT COUNT(*) AS n FROM bloques_horario WHERE medico_id = ?', [id(rut)]);
@@ -133,6 +168,25 @@ async function main() {
     for (let dia = 1; dia <= 5; dia++) for (const [ini, fin] of bloques) await q('INSERT INTO bloques_horario (medico_id, dia_semana, hora_inicio, hora_fin, vigente_desde) VALUES (?, ?, ?, ?, ?)', [id(rut), dia, ini, fin, '2026-01-01']);
   }
   for (const [f, n] of FERIADOS) await q('INSERT IGNORE INTO feriados (fecha, nombre) VALUES (?, ?)', [f, n]);
+
+  // Director médico y plantillas de indicaciones
+  await q('UPDATE perfil_profesional SET es_director = 1 WHERE usuario_id = ?', [id(SALAS)]);
+  const PLANTILLAS: Array<[string, string, string, string, string | null, string | null, string | null, string | null, number | null, number | null]> = [
+    ['Paracetamol 500 mg cada 8 horas por 6 días', 'MEDICAMENTO', 'Paracetamol por 6 días', 'Tome 1 comprimido de 500 mg cada 8 horas durante 6 días, después de las comidas.', 'Paracetamol', 'Comprimido 500 mg', '1 comprimido', 'Oral', 8, 6],
+    ['Ibuprofeno 400 mg cada 8 horas por 5 días', 'MEDICAMENTO', 'Ibuprofeno por 5 días', 'Tome 1 comprimido de 400 mg cada 8 horas durante 5 días, siempre con alimentos.', 'Ibuprofeno', 'Comprimido 400 mg', '1 comprimido', 'Oral', 8, 5],
+    ['Amoxicilina 500 mg cada 8 horas por 7 días', 'MEDICAMENTO', 'Amoxicilina por 7 días', 'Tome 1 cápsula de 500 mg cada 8 horas durante 7 días, completando el tratamiento aunque se sienta mejor.', 'Amoxicilina', 'Cápsula 500 mg', '1 cápsula', 'Oral', 8, 7],
+    ['Reposo en casa', 'RUTINA', 'Reposo en casa', 'Descanse en casa y evite esfuerzos físicos. Retome sus actividades de forma gradual.', null, null, null, null, null, null],
+    ['Hidratación abundante', 'RUTINA', 'Hidratación abundante', 'Tome al menos 2 litros de agua al día, repartidos en pequeñas cantidades durante el día.', null, null, null, null, null, null],
+    ['Evitar alcohol', 'HABITO_EVITAR', 'Evitar el alcohol', 'No consuma alcohol mientras dure el tratamiento.', null, null, null, null, null, null],
+    ['Control en dos semanas', 'OTRO', 'Control en dos semanas', 'Agende una hora de control para evaluar cómo va su recuperación.', null, null, null, null, null, null],
+  ];
+  for (const [nombre, tipo, titulo, desc, med, pres, dosis, via, cadaH, dias] of PLANTILLAS) {
+    await q(
+      `INSERT IGNORE INTO plantillas_indicacion (nombre, tipo, titulo, descripcion, medicamento, presentacion, dosis, via, modo, intervalo_horas, duracion_dias, creada_por)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [nombre, tipo, titulo, desc, med, pres, dosis, via, cadaH ? 'CADA_N_HORAS' : null, cadaH, dias, id(SALAS)],
+    );
+  }
 
   const esFeriado = (f: string) => FERIADOS.some(([x]) => x === f);
   const habil = (f: string) => diaSemanaDe(f) <= 5 && !esFeriado(f);

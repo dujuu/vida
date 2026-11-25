@@ -93,7 +93,9 @@ export class RelacionesService {
   async medicosDe(pacienteId: number) {
     const filas = await this.ds.query(
       `SELECT u.id, u.titulo, u.nombres, u.apellido_paterno AS ap, u.apellido_materno AS am, e.nombre AS especialidad,
-              dp.vigente, dp.origen, dp.created_at AS desde, dp.cerrada_en AS cerradaEn
+              dp.vigente, dp.origen, dp.created_at AS desde, dp.cerrada_en AS cerradaEn, dp.motivo_cierre AS motivoCierre,
+              (SELECT COUNT(*) FROM citas c WHERE c.medico_id = dp.doctor_id AND c.paciente_id = dp.paciente_id
+                 AND c.estado IN ('RESERVADA', 'EN_ESPERA') AND c.inicio > UTC_TIMESTAMP(6)) AS citasPendientes
        FROM doctor_paciente dp JOIN usuarios u ON u.id = dp.doctor_id
        LEFT JOIN perfil_profesional p ON p.usuario_id = u.id LEFT JOIN especialidades e ON e.id = p.especialidad_id
        WHERE dp.paciente_id = ? ORDER BY dp.vigente DESC, u.apellido_paterno`,
@@ -107,6 +109,9 @@ export class RelacionesService {
       origen: f.origen,
       desde: f.desde,
       cerradaEn: f.cerradaEn,
+      motivoCierre: f.motivoCierre,
+      /** Citas futuras que siguen reservadas con este médico: recepción decide si las cancela. */
+      citasPendientes: Number(f.citasPendientes),
     }));
   }
 
@@ -122,7 +127,8 @@ export class RelacionesService {
   }
 
   /**
-   * Cierra la relación con un motivo. La puede cerrar el administrador o el propio médico.
+   * Cierra la relación con un motivo (quitar al médico asignado). La puede cerrar recepción, el administrador o el propio médico.
+   * No cancela las citas futuras: `medicosDe` informa cuántas quedan para que recepción decida.
    *
    * @throws NotFoundException si la relación no existe o el médico intenta cerrar la de otro.
    */

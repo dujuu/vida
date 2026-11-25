@@ -19,9 +19,9 @@ import { ETIQUETA_ROL, type Pagina as PaginaDe, type Rol } from '../core/models'
 import { normalizarRut } from '../core/rut';
 import { ChipEstado } from '../shared/chip-estado';
 import { Estado, Pagina, RutFormato, confirmar } from '../shared/piezas';
+import { nombrePersona, telefonoValido } from '../core/validadores';
 
 const ROLES: Rol[] = ['PACIENTE', 'MEDICO', 'RECEPCIONISTA', 'ADMINISTRADOR'];
-const TELEFONO = /^[+0-9 ()-]{7,20}$/;
 
 /** Crea el grupo de controles del perfil profesional de un médico. */
 export function grupoPerfil(fb: NonNullableFormBuilder) {
@@ -173,11 +173,11 @@ export class UsuariosAdmin {
         <form class="tarjeta campos" [formGroup]="f" (ngSubmit)="guardar()" novalidate>
           <mat-form-field><mat-label>RUT</mat-label><input matInput appRut formControlName="rut" /><mat-error>Ingrese un RUT válido.</mat-error></mat-form-field>
           <mat-form-field><mat-label>Tratamiento (Dr., Dra.)</mat-label><input matInput formControlName="titulo" maxlength="10" /></mat-form-field>
-          <mat-form-field><mat-label>Nombres</mat-label><input matInput formControlName="nombres" maxlength="80" /><mat-error>Ingrese los nombres.</mat-error></mat-form-field>
-          <mat-form-field><mat-label>Apellido paterno</mat-label><input matInput formControlName="apellidoPaterno" maxlength="60" /><mat-error>Ingrese el apellido.</mat-error></mat-form-field>
-          <mat-form-field><mat-label>Apellido materno</mat-label><input matInput formControlName="apellidoMaterno" maxlength="60" /></mat-form-field>
+          <mat-form-field><mat-label>Nombres</mat-label><input matInput formControlName="nombres" maxlength="80" /><mat-error>Ingrese los nombres, solo con letras.</mat-error></mat-form-field>
+          <mat-form-field><mat-label>Apellido paterno</mat-label><input matInput formControlName="apellidoPaterno" maxlength="60" /><mat-error>Ingrese el apellido, solo con letras.</mat-error></mat-form-field>
+          <mat-form-field><mat-label>Apellido materno</mat-label><input matInput formControlName="apellidoMaterno" maxlength="60" /><mat-error>Solo letras, sin números ni signos.</mat-error></mat-form-field>
           <mat-form-field><mat-label>Correo</mat-label><input matInput type="email" formControlName="correo" /><mat-error>El correo no es válido.</mat-error></mat-form-field>
-          <mat-form-field><mat-label>Teléfono</mat-label><input matInput type="tel" formControlName="telefono" /><mat-error>El teléfono no es válido.</mat-error></mat-form-field>
+          <mat-form-field><mat-label>Teléfono</mat-label><input matInput type="tel" formControlName="telefono" /><mat-error>Debe tener entre 8 y 12 dígitos (puede llevar + al inicio).</mat-error></mat-form-field>
 
           <fieldset class="ancho roles"><legend>Roles</legend>
             @for (r of roles; track r) { <mat-checkbox [checked]="seleccion().includes(r)" (change)="alternar(r, $event.checked)">{{ etiqueta[r] }}</mat-checkbox> }
@@ -218,11 +218,11 @@ export class UsuarioNuevo {
   protected readonly f = this.fb.group({
     rut: ['', [Validators.required, (c: { value: string }) => (normalizarRut(c.value) ? null : { rut: true })]],
     titulo: [''],
-    nombres: ['', [Validators.required, Validators.minLength(2)]],
-    apellidoPaterno: ['', [Validators.required, Validators.minLength(2)]],
-    apellidoMaterno: [''],
+    nombres: ['', [Validators.required, Validators.minLength(2), nombrePersona]],
+    apellidoPaterno: ['', [Validators.required, Validators.minLength(2), nombrePersona]],
+    apellidoMaterno: ['', nombrePersona],
     correo: ['', Validators.email],
-    telefono: ['', Validators.pattern(TELEFONO)],
+    telefono: ['', telefonoValido],
   });
 
   constructor() {
@@ -308,11 +308,11 @@ export class UsuarioNuevo {
           <form class="tarjeta campos" [formGroup]="datos" (ngSubmit)="guardarDatos()" novalidate>
             <h2 class="ancho">Datos personales</h2>
             <mat-form-field><mat-label>Tratamiento</mat-label><input matInput formControlName="titulo" maxlength="10" /></mat-form-field>
-            <mat-form-field><mat-label>Nombres</mat-label><input matInput formControlName="nombres" maxlength="80" /></mat-form-field>
-            <mat-form-field><mat-label>Apellido paterno</mat-label><input matInput formControlName="apellidoPaterno" maxlength="60" /></mat-form-field>
-            <mat-form-field><mat-label>Apellido materno</mat-label><input matInput formControlName="apellidoMaterno" maxlength="60" /></mat-form-field>
+            <mat-form-field><mat-label>Nombres</mat-label><input matInput formControlName="nombres" maxlength="80" /><mat-error>Solo letras, sin números ni signos.</mat-error></mat-form-field>
+            <mat-form-field><mat-label>Apellido paterno</mat-label><input matInput formControlName="apellidoPaterno" maxlength="60" /><mat-error>Solo letras, sin números ni signos.</mat-error></mat-form-field>
+            <mat-form-field><mat-label>Apellido materno</mat-label><input matInput formControlName="apellidoMaterno" maxlength="60" /><mat-error>Solo letras, sin números ni signos.</mat-error></mat-form-field>
             <mat-form-field><mat-label>Correo</mat-label><input matInput type="email" formControlName="correo" /><mat-error>El correo no es válido.</mat-error></mat-form-field>
-            <mat-form-field><mat-label>Teléfono</mat-label><input matInput type="tel" formControlName="telefono" /><mat-error>El teléfono no es válido.</mat-error></mat-form-field>
+            <mat-form-field><mat-label>Teléfono</mat-label><input matInput type="tel" formControlName="telefono" /><mat-error>Debe tener entre 8 y 12 dígitos (puede llevar + al inicio).</mat-error></mat-form-field>
             <div class="ancho acciones-fila"><button mat-flat-button type="submit" [disabled]="datos.pristine || trabajando()">Guardar datos</button></div>
           </form>
 
@@ -361,11 +361,11 @@ export class UsuarioDetalle {
   protected readonly perfil = grupoPerfil(this.fb);
   protected readonly datos = this.fb.group({
     titulo: [''],
-    nombres: ['', [Validators.required, Validators.minLength(2)]],
-    apellidoPaterno: ['', [Validators.required, Validators.minLength(2)]],
-    apellidoMaterno: [''],
+    nombres: ['', [Validators.required, Validators.minLength(2), nombrePersona]],
+    apellidoPaterno: ['', [Validators.required, Validators.minLength(2), nombrePersona]],
+    apellidoMaterno: ['', nombrePersona],
     correo: ['', Validators.email],
-    telefono: ['', Validators.pattern(TELEFONO)],
+    telefono: ['', telefonoValido],
   });
 
   constructor() {

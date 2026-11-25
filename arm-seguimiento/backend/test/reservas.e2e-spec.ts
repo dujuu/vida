@@ -16,7 +16,7 @@ afterAll(async () => app?.close());
 describe('reserva de horas', () => {
   it('20 reservas simultáneas de la misma hora: exactamente 1 éxito y 19 rechazos 409', async () => {
     const pacientes = [];
-    for (let i = 0; i < 20; i++) pacientes.push(await c.crearPaciente(esc.recepcion, `Concurrente${i}`));
+    for (let i = 0; i < 20; i++) pacientes.push(await c.crearPaciente(esc.recepcion, `Concurrente${String.fromCharCode(65 + i)}`));
     const horas = await c.horasLibres(esc.recepcion.token, esc.medico2.id);
     const hora = horas[3];
     const resultados = await Promise.all(pacientes.map((p) => c.post('/citas', p.token, { medicoId: esc.medico2.id, inicio: hora.inicio })));

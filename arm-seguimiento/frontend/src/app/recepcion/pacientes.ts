@@ -18,8 +18,9 @@ import type { Cita, Pagina as PaginaDe, Profesional } from '../core/models';
 import { normalizarRut } from '../core/rut';
 import { ChipEstado } from '../shared/chip-estado';
 import { Estado, Pagina, RutFormato, confirmar } from '../shared/piezas';
+import { SelectorComuna } from '../shared/selector-comuna';
+import { fechaMinimaNacimiento, fechaNacimientoEnRango, nombrePersona, telefonoValido } from '../core/validadores';
 
-const TELEFONO = /^[+0-9 ()-]{7,20}$/;
 
 // ───────────────────────── Búsqueda ─────────────────────────
 
@@ -103,7 +104,7 @@ export class PacientesRecepcion {
  */
 @Component({
   selector: 'app-paciente-nuevo',
-  imports: [Pagina, ReactiveFormsModule, RutFormato, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatButtonModule, MatIconModule, RouterLink],
+  imports: [Pagina, ReactiveFormsModule, RutFormato, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatButtonModule, MatIconModule, RouterLink, SelectorComuna],
   template: `
     <app-pagina titulo="Registrar paciente" [volver]="true">
       @if (creado(); as c) {
@@ -126,23 +127,23 @@ export class PacientesRecepcion {
           }
           <h2 class="ancho">Identificación</h2>
           <mat-form-field><mat-label>RUT</mat-label><input matInput appRut formControlName="rut" /><mat-error>Ingrese un RUT válido.</mat-error></mat-form-field>
-          <mat-form-field><mat-label>Fecha de nacimiento</mat-label><input matInput type="date" formControlName="fechaNacimiento" [max]="hoy" /><mat-error>Ingrese una fecha válida.</mat-error></mat-form-field>
-          <mat-form-field><mat-label>Nombres</mat-label><input matInput formControlName="nombres" maxlength="80" /><mat-error>Ingrese los nombres.</mat-error></mat-form-field>
-          <mat-form-field><mat-label>Apellido paterno</mat-label><input matInput formControlName="apellidoPaterno" maxlength="60" /><mat-error>Ingrese el apellido.</mat-error></mat-form-field>
-          <mat-form-field><mat-label>Apellido materno</mat-label><input matInput formControlName="apellidoMaterno" maxlength="60" /></mat-form-field>
+          <mat-form-field><mat-label>Fecha de nacimiento</mat-label><input matInput type="date" formControlName="fechaNacimiento" [min]="minNacimiento" [max]="hoy" /><mat-error>Ingrese una fecha que no sea futura ni de más de 130 años atrás.</mat-error></mat-form-field>
+          <mat-form-field><mat-label>Nombres</mat-label><input matInput formControlName="nombres" maxlength="80" /><mat-error>Ingrese los nombres, solo con letras.</mat-error></mat-form-field>
+          <mat-form-field><mat-label>Apellido paterno</mat-label><input matInput formControlName="apellidoPaterno" maxlength="60" /><mat-error>Ingrese el apellido, solo con letras.</mat-error></mat-form-field>
+          <mat-form-field><mat-label>Apellido materno</mat-label><input matInput formControlName="apellidoMaterno" maxlength="60" /><mat-error>Solo letras, sin números ni signos.</mat-error></mat-form-field>
           <mat-form-field><mat-label>Sexo</mat-label><mat-select formControlName="sexo"><mat-option value="">Sin indicar</mat-option><mat-option value="F">Femenino</mat-option><mat-option value="M">Masculino</mat-option><mat-option value="O">Otro</mat-option></mat-select></mat-form-field>
 
           <h2 class="ancho">Contacto</h2>
           <p class="muted ancho">Ingrese al menos un teléfono o un correo.</p>
-          <mat-form-field><mat-label>Teléfono</mat-label><input matInput type="tel" formControlName="telefono" /><mat-error>El teléfono no es válido.</mat-error></mat-form-field>
+          <mat-form-field><mat-label>Teléfono</mat-label><input matInput type="tel" formControlName="telefono" /><mat-error>Debe tener entre 8 y 12 dígitos (puede llevar + al inicio).</mat-error></mat-form-field>
           <mat-form-field><mat-label>Correo</mat-label><input matInput type="email" formControlName="correo" /><mat-error>El correo no es válido.</mat-error></mat-form-field>
           <mat-form-field><mat-label>Dirección</mat-label><input matInput formControlName="direccion" maxlength="200" /></mat-form-field>
-          <mat-form-field><mat-label>Comuna</mat-label><input matInput formControlName="comuna" maxlength="80" /></mat-form-field>
+          <app-selector-comuna [control]="f.controls.comuna" />
           <mat-form-field><mat-label>Medio de contacto preferido</mat-label><mat-select formControlName="medioContacto"><mat-option value="">Sin preferencia</mat-option><mat-option value="LLAMADA">Llamada</mat-option><mat-option value="WHATSAPP">WhatsApp</mat-option><mat-option value="CORREO">Correo</mat-option></mat-select></mat-form-field>
 
           <h2 class="ancho">Contacto de emergencia (opcional)</h2>
           <mat-form-field><mat-label>Nombre</mat-label><input matInput formControlName="emergenciaNombre" maxlength="120" /></mat-form-field>
-          <mat-form-field><mat-label>Teléfono</mat-label><input matInput type="tel" formControlName="emergenciaTelefono" /><mat-error>El teléfono no es válido.</mat-error></mat-form-field>
+          <mat-form-field><mat-label>Teléfono</mat-label><input matInput type="tel" formControlName="emergenciaTelefono" /><mat-error>Debe tener entre 8 y 12 dígitos (puede llevar + al inicio).</mat-error></mat-form-field>
           <mat-form-field><mat-label>Parentesco</mat-label><input matInput formControlName="emergenciaParentesco" maxlength="40" /></mat-form-field>
 
           <mat-checkbox class="ancho" formControlName="aceptaRecordatorios">Acepta recibir recordatorios de sus citas</mat-checkbox>
@@ -163,6 +164,7 @@ export class PacienteNuevo {
   private readonly api = inject(Api);
   private readonly fb = inject(NonNullableFormBuilder);
   protected readonly hoy = hoyIso();
+  protected readonly minNacimiento = fechaMinimaNacimiento(hoyIso());
   protected readonly enviando = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly duplicado = signal<{ message: string; pacienteId: number | null; nombre: string } | null>(null);
@@ -170,18 +172,18 @@ export class PacienteNuevo {
   protected readonly vence = (v: string) => fechaHora(v);
   protected readonly f = this.fb.group({
     rut: ['', [Validators.required, (c: { value: string }) => (normalizarRut(c.value) ? null : { rut: true })]],
-    fechaNacimiento: ['', Validators.required],
-    nombres: ['', [Validators.required, Validators.minLength(2)]],
-    apellidoPaterno: ['', [Validators.required, Validators.minLength(2)]],
-    apellidoMaterno: [''],
+    fechaNacimiento: ['', [Validators.required, fechaNacimientoEnRango(hoyIso)]],
+    nombres: ['', [Validators.required, Validators.minLength(2), nombrePersona]],
+    apellidoPaterno: ['', [Validators.required, Validators.minLength(2), nombrePersona]],
+    apellidoMaterno: ['', nombrePersona],
     sexo: [''],
-    telefono: ['', Validators.pattern(TELEFONO)],
+    telefono: ['', telefonoValido],
     correo: ['', Validators.email],
     direccion: [''],
     comuna: [''],
     medioContacto: [''],
     emergenciaNombre: [''],
-    emergenciaTelefono: ['', Validators.pattern(TELEFONO)],
+    emergenciaTelefono: ['', telefonoValido],
     emergenciaParentesco: [''],
     aceptaRecordatorios: [true],
     consentimientoPresencial: [false],
@@ -221,7 +223,7 @@ export class PacienteNuevo {
  */
 @Component({
   selector: 'app-paciente-detalle',
-  imports: [Pagina, Estado, ChipEstado, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatButtonModule, MatIconModule, RouterLink],
+  imports: [Pagina, Estado, ChipEstado, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatButtonModule, MatIconModule, RouterLink, SelectorComuna],
   template: `
     <app-pagina [titulo]="p()?.nombre ?? 'Paciente'" [subtitulo]="p() ? 'RUT ' + p().rut : ''" [volver]="true">
       <div acciones class="fila">
@@ -256,17 +258,17 @@ export class PacienteNuevo {
 
           <form class="tarjeta campos" [formGroup]="f" (ngSubmit)="guardar()" novalidate>
             <h2 class="ancho">Datos del paciente</h2>
-            <mat-form-field><mat-label>Nombres</mat-label><input matInput formControlName="nombres" maxlength="80" /></mat-form-field>
-            <mat-form-field><mat-label>Apellido paterno</mat-label><input matInput formControlName="apellidoPaterno" maxlength="60" /></mat-form-field>
-            <mat-form-field><mat-label>Apellido materno</mat-label><input matInput formControlName="apellidoMaterno" maxlength="60" /></mat-form-field>
-            <mat-form-field><mat-label>Fecha de nacimiento</mat-label><input matInput type="date" formControlName="fechaNacimiento" [max]="hoy" /></mat-form-field>
+            <mat-form-field><mat-label>Nombres</mat-label><input matInput formControlName="nombres" maxlength="80" /><mat-error>Solo letras, sin números ni signos.</mat-error></mat-form-field>
+            <mat-form-field><mat-label>Apellido paterno</mat-label><input matInput formControlName="apellidoPaterno" maxlength="60" /><mat-error>Solo letras, sin números ni signos.</mat-error></mat-form-field>
+            <mat-form-field><mat-label>Apellido materno</mat-label><input matInput formControlName="apellidoMaterno" maxlength="60" /><mat-error>Solo letras, sin números ni signos.</mat-error></mat-form-field>
+            <mat-form-field><mat-label>Fecha de nacimiento</mat-label><input matInput type="date" formControlName="fechaNacimiento" [min]="minNacimiento" [max]="hoy" /><mat-error>Ingrese una fecha que no sea futura ni de más de 130 años atrás.</mat-error></mat-form-field>
             <mat-form-field><mat-label>Sexo</mat-label><mat-select formControlName="sexo"><mat-option value="">Sin indicar</mat-option><mat-option value="F">Femenino</mat-option><mat-option value="M">Masculino</mat-option><mat-option value="O">Otro</mat-option></mat-select></mat-form-field>
-            <mat-form-field><mat-label>Teléfono</mat-label><input matInput type="tel" formControlName="telefono" /><mat-error>El teléfono no es válido.</mat-error></mat-form-field>
+            <mat-form-field><mat-label>Teléfono</mat-label><input matInput type="tel" formControlName="telefono" /><mat-error>Debe tener entre 8 y 12 dígitos (puede llevar + al inicio).</mat-error></mat-form-field>
             <mat-form-field><mat-label>Correo</mat-label><input matInput type="email" formControlName="correo" /><mat-error>El correo no es válido.</mat-error></mat-form-field>
             <mat-form-field><mat-label>Dirección</mat-label><input matInput formControlName="direccion" maxlength="200" /></mat-form-field>
-            <mat-form-field><mat-label>Comuna</mat-label><input matInput formControlName="comuna" maxlength="80" /></mat-form-field>
+            <app-selector-comuna [control]="f.controls.comuna" />
             <mat-form-field><mat-label>Contacto de emergencia</mat-label><input matInput formControlName="emergenciaNombre" maxlength="120" /></mat-form-field>
-            <mat-form-field><mat-label>Teléfono de emergencia</mat-label><input matInput type="tel" formControlName="emergenciaTelefono" /><mat-error>El teléfono no es válido.</mat-error></mat-form-field>
+            <mat-form-field><mat-label>Teléfono de emergencia</mat-label><input matInput type="tel" formControlName="emergenciaTelefono" /><mat-error>Debe tener entre 8 y 12 dígitos (puede llevar + al inicio).</mat-error></mat-form-field>
             <mat-form-field><mat-label>Parentesco</mat-label><input matInput formControlName="emergenciaParentesco" maxlength="40" /></mat-form-field>
             <mat-form-field><mat-label>Medio preferido</mat-label><mat-select formControlName="medioContacto"><mat-option value="">Sin preferencia</mat-option><mat-option value="LLAMADA">Llamada</mat-option><mat-option value="WHATSAPP">WhatsApp</mat-option><mat-option value="CORREO">Correo</mat-option></mat-select></mat-form-field>
             <mat-checkbox class="ancho" formControlName="aceptaRecordatorios">Acepta recibir recordatorios</mat-checkbox>
@@ -289,7 +291,10 @@ export class PacienteNuevo {
             <ul class="lista-tarjetas">
               @for (m of medicos(); track m.id) {
                 <li class="item"><span class="grande"><strong>{{ m.nombre }}</strong><small>{{ m.especialidad }} · desde {{ hora(m.desde) }}{{ m.origen === 'MANUAL' ? ' · asignado por recepción' : '' }}</small></span>
-                  <app-chip [etiqueta]="m.vigente ? 'Vigente' : 'Cerrada'" [color]="m.vigente ? 'ok' : 'neutro'" /></li>
+                  <app-chip [etiqueta]="m.vigente ? 'Vigente' : 'Cerrada'" [color]="m.vigente ? 'ok' : 'neutro'" />
+                  @if (m.vigente && m.citasPendientes > 0) { <small class="aviso">{{ m.citasPendientes }} cita(s) futura(s) con este médico: cancélelas desde la agenda si corresponde.</small> }
+                  @if (m.vigente) { <button mat-button type="button" (click)="quitarMedico(m)">Quitar</button> }
+                  @if (!m.vigente && m.motivoCierre) { <small>Motivo: {{ m.motivoCierre }}</small> }</li>
               } @empty { <li class="muted">Todavía no tiene un médico asignado. Se asigna solo al reservar una hora, o a mano aquí.</li> }
             </ul>
             <div class="fila asignar">
@@ -315,7 +320,7 @@ export class PacienteNuevo {
     section.tarjeta, form.tarjeta { margin-bottom: 1rem; } .cuenta { display: flex; gap: 1rem; justify-content: space-between; align-items: center; flex-wrap: wrap; }
     .exito { display: grid; gap: .5rem; }
     .codigo { font: 700 2rem/1.2 ui-monospace, 'SFMono-Regular', Menlo, monospace; letter-spacing: .15em; background: var(--mat-sys-surface-container-high); padding: .75rem 1rem; border-radius: 12px; width: fit-content; user-select: all; }
-    .item { flex-wrap: wrap; } .asignar { margin-top: .75rem; align-items: flex-start; gap: .75rem; flex-wrap: wrap; } .crece { flex: 1; min-width: 14rem; }
+    .item { flex-wrap: wrap; } .aviso { color: var(--mat-sys-error); flex-basis: 100%; } .asignar { margin-top: .75rem; align-items: flex-start; gap: .75rem; flex-wrap: wrap; } .crece { flex: 1; min-width: 14rem; }
   `,
 })
 export class PacienteDetalle {
@@ -339,19 +344,20 @@ export class PacienteDetalle {
   protected readonly guardando = signal(false);
   protected readonly emitiendo = signal(false);
   protected readonly hoy = hoyIso();
+  protected readonly minNacimiento = fechaMinimaNacimiento(hoyIso());
   protected readonly hora = (v: string | Date) => fechaHora(v);
   protected readonly f = this.fb.group({
-    nombres: ['', [Validators.required, Validators.minLength(2)]],
-    apellidoPaterno: ['', [Validators.required, Validators.minLength(2)]],
-    apellidoMaterno: [''],
-    fechaNacimiento: [''],
+    nombres: ['', [Validators.required, Validators.minLength(2), nombrePersona]],
+    apellidoPaterno: ['', [Validators.required, Validators.minLength(2), nombrePersona]],
+    apellidoMaterno: ['', nombrePersona],
+    fechaNacimiento: ['', fechaNacimientoEnRango(hoyIso)],
     sexo: [''],
-    telefono: ['', Validators.pattern(TELEFONO)],
+    telefono: ['', telefonoValido],
     correo: ['', Validators.email],
     direccion: [''],
     comuna: [''],
     emergenciaNombre: [''],
-    emergenciaTelefono: ['', Validators.pattern(TELEFONO)],
+    emergenciaTelefono: ['', telefonoValido],
     emergenciaParentesco: [''],
     medioContacto: [''],
     aceptaRecordatorios: [true],
@@ -401,6 +407,25 @@ export class PacienteDetalle {
       next: () => {
         this.medicoElegido.set(null);
         this.snack.open('Médico asignado', 'Cerrar', { duration: 3000 });
+        this.cargarMedicos();
+      },
+      error: (e: unknown) => this.snack.open(mensajeError(e), 'Cerrar', { duration: 8000 }),
+    });
+  }
+
+  /** Quita al médico asignado (por error o por suspensión): cierra la relación con un motivo, sin borrar el historial. */
+  protected async quitarMedico(m: { id: number; nombre: string }): Promise<void> {
+    const r = await confirmar(this.dialog, {
+      titulo: 'Quitar al médico asignado',
+      texto: `${m.nombre} dejará de ver a este paciente. Lo ya registrado queda en el historial. Las citas futuras no se cancelan solas.`,
+      motivo: 'Motivo (por ejemplo, asignación por error)',
+      confirmar: 'Quitar médico',
+      peligro: true,
+    });
+    if (!r) return;
+    this.api.post(`/relaciones/${m.id}/${this.id()}/cerrar`, { motivo: r.motivo }).subscribe({
+      next: () => {
+        this.snack.open('Médico quitado', 'Cerrar', { duration: 3000 });
         this.cargarMedicos();
       },
       error: (e: unknown) => this.snack.open(mensajeError(e), 'Cerrar', { duration: 8000 }),

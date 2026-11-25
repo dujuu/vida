@@ -16,7 +16,8 @@ import {
 import { REGEX_FECHA } from '../common/fechas.util.js';
 import { PaginacionDto } from '../common/paginacion.js';
 import { limpiarTexto } from '../common/texto.util.js';
-import { REGEX_TELEFONO } from '../usuarios/usuarios.dto.js';
+import { COMUNAS, comunaOficial } from '../common/divisiones-chile.js';
+import { REGEX_NOMBRE_PERSONA, REGEX_TELEFONO } from '../common/validaciones.js';
 
 /** Medios de contacto que el paciente puede preferir. */
 export enum MedioPreferido {
@@ -29,7 +30,7 @@ export enum MedioPreferido {
 export class ContactoPacienteDto {
   @IsOptional()
   @Transform(limpiarTexto)
-  @Matches(REGEX_TELEFONO, { message: 'El teléfono no es válido' })
+  @Matches(REGEX_TELEFONO, { message: 'El teléfono debe tener entre 8 y 12 dígitos (puede llevar + al inicio)' })
   telefono?: string;
 
   @IsOptional()
@@ -45,9 +46,8 @@ export class ContactoPacienteDto {
   direccion?: string;
 
   @IsOptional()
-  @Transform(limpiarTexto)
-  @IsString()
-  @MaxLength(80, { message: 'La comuna no puede superar los 80 caracteres' })
+  @Transform(({ value }) => (typeof value === 'string' ? (comunaOficial(value) ?? value.trim()) : value))
+  @IsIn(COMUNAS, { message: 'Seleccione una comuna de la lista (región, provincia y comuna)' })
   comuna?: string;
 
   @IsOptional()
@@ -58,7 +58,7 @@ export class ContactoPacienteDto {
 
   @IsOptional()
   @Transform(limpiarTexto)
-  @Matches(REGEX_TELEFONO, { message: 'El teléfono de emergencia no es válido' })
+  @Matches(REGEX_TELEFONO, { message: 'El teléfono de emergencia debe tener entre 8 y 12 dígitos (puede llevar + al inicio)' })
   emergenciaTelefono?: string;
 
   @IsOptional()
@@ -83,6 +83,7 @@ export class EditarPacienteDto extends ContactoPacienteDto {
   @IsString()
   @MinLength(2, { message: 'Los nombres deben tener al menos 2 caracteres' })
   @MaxLength(80)
+  @Matches(REGEX_NOMBRE_PERSONA, { message: 'Los nombres solo pueden tener letras, espacios y guion' })
   nombres?: string;
 
   @IsOptional()
@@ -90,12 +91,14 @@ export class EditarPacienteDto extends ContactoPacienteDto {
   @IsString()
   @MinLength(2, { message: 'El apellido paterno debe tener al menos 2 caracteres' })
   @MaxLength(60)
+  @Matches(REGEX_NOMBRE_PERSONA, { message: 'El apellido paterno solo puede tener letras, espacios y guion' })
   apellidoPaterno?: string;
 
   @IsOptional()
   @Transform(limpiarTexto)
   @IsString()
   @MaxLength(60)
+  @Matches(REGEX_NOMBRE_PERSONA, { message: 'El apellido materno solo puede tener letras, espacios y guion' })
   apellidoMaterno?: string;
 
   @IsOptional()

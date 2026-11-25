@@ -32,6 +32,10 @@ export class PerfilProfesional {
   @Column({ name: 'acepta_reservas', type: 'boolean', default: true })
   aceptaReservas: boolean;
 
+  /** Director médico: puede crear y editar las plantillas de indicaciones. */
+  @Column({ name: 'es_director', type: 'boolean', default: false })
+  esDirector: boolean;
+
   @Column({ type: 'varchar', length: 300, nullable: true })
   presentacion: string | null;
 }
